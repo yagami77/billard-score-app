@@ -67,6 +67,7 @@ const BillardScore: React.FC = () => {
 
     const [roomCode] = useState(() => `TABLE_${Math.random().toString(36).substr(2, 6)}`);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { emitStateUpdate } = useSocket(roomCode, (newState: any) => {
         console.log('BillardScore received state:', newState);
     });
