@@ -2,8 +2,24 @@ import React from 'react';
 import { Button } from '@/app/components/ui/button';
 import { Trophy } from 'lucide-react';
 
-const WinnerDisplay = ({ gagnant, nomJoueurs, setsGagnes, onNewGame }) => {
-    if (!gagnant) return null;
+// Définition des types des props
+interface WinnerDisplayProps {
+    gagnant: number; // Indice du joueur gagnant (ou changez à string si c'est une clé)
+    nomJoueurs: string[]; // Tableau contenant les noms des joueurs
+    setsGagnes: {
+        joueur1: number;
+        joueur2: number;
+    }; // Score final des joueurs
+    onNewGame: () => void; // Fonction appelée pour une nouvelle partie
+}
+
+const WinnerDisplay: React.FC<WinnerDisplayProps> = ({
+                                                         gagnant,
+                                                         nomJoueurs,
+                                                         setsGagnes,
+                                                         onNewGame,
+                                                     }) => {
+    if (gagnant === undefined || gagnant === null) return null; // Vérification supplémentaire
 
     return (
         <div className="absolute inset-0 bg-blue-900/50 flex items-center justify-center z-10 rounded-lg">
