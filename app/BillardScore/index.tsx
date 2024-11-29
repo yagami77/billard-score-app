@@ -195,7 +195,7 @@ const BillardScore: React.FC = () => {
                             Code de table : <span className="font-mono font-bold">{roomCode}</span>
                         </p>
                         <p className="text-xs text-blue-600 mt-1">
-                            Utilisez ce code dans OBS : http://localhost:3000/overlay?table={roomCode}
+                            Utilisez ce code dans OBS : {`${process.env.NEXT_PUBLIC_BASE_URL}/overlay?table=${roomCode}`}
                         </p>
                     </div>
                 )}
