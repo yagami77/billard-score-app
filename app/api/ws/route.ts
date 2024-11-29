@@ -19,7 +19,7 @@ const dashboardSockets = new Set<Socket>();
 const httpServer = createServer();
 const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:3000", // Remplacez par l'URL de production si nécessaire
+        origin: process.env.NEXT_PUBLIC_ORIGIN_URL || "http://localhost:3000", // Remplacez par l'URL de production si nécessaire
         methods: ["GET", "POST"]
     }
 });

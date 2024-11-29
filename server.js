@@ -4,7 +4,7 @@ const { Server } = require('socket.io');
 const httpServer = createServer();
 const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: process.env.NEXT_PUBLIC_ORIGIN_URL || "http://localhost:3000",
         methods: ["GET", "POST"]
     }
 });
