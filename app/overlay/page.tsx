@@ -1,28 +1,26 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSocket } from '../../hooks/useSocket';
 import { GameState } from '../../types/types';
 import { Crown } from 'lucide-react';
 
-export default function OverlayPage() {
+const OverlayContent: React.FC = () => {
     const searchParams = useSearchParams();
     const roomCode = searchParams.get('table') || 'default';
     const [gameState, setGameState] = useState<GameState | null>(null);
 
-    // Utilisation du hook WebSocket avec des logs de debug
+    // Utilisation du hook WebSocket
     const {} = useSocket(roomCode, (newState) => {
         console.log('Overlay received state:', newState);
         setGameState(newState);
     });
 
-    // Log pour voir si le composant se monte correctement
     useEffect(() => {
         console.log('Overlay mounted with roomCode:', roomCode);
     }, [roomCode]);
 
-    // Affichage du message d'attente avec plus d'informations
     if (!gameState) {
         return (
             <div className="p-4 text-white bg-black/50 rounded">
@@ -100,5 +98,13 @@ export default function OverlayPage() {
                 </table>
             </div>
         </main>
+    );
+};
+
+export default function OverlayPage() {
+    return (
+        <Suspense fallback={<div>Chargement...</div>}>
+            <OverlayContent />
+        </Suspense>
     );
 }
