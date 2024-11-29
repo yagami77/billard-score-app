@@ -12,7 +12,7 @@ export default function OverlayPage() {
     const [gameState, setGameState] = useState<GameState | null>(null);
 
     // Utilisation du hook WebSocket avec des logs de debug
-    const { emitStateUpdate } = useSocket(roomCode, (newState) => {
+    const {} = useSocket(roomCode, (newState) => {
         console.log('Overlay received state:', newState);
         setGameState(newState);
     });

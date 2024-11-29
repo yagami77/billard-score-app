@@ -56,7 +56,6 @@ const BillardScore = () => {
         };
 
         if (!showConfigDialog) {
-            console.log('Emitting state:', gameState);
             emitStateUpdate(gameState);
         }
     }, [scores, setsGagnes, nomJoueurs, activePlayer, configPartie, gagnant, showConfigDialog]);
