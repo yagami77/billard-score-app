@@ -84,7 +84,7 @@ const BillardScore: React.FC = () => {
         if (!showConfigDialog) {
             emitStateUpdate(gameState);
         }
-    }, [scores, setsGagnes, nomJoueurs, activePlayer, configPartie, gagnant, showConfigDialog]);
+    }, [scores, setsGagnes, nomJoueurs, activePlayer, configPartie, gagnant, showConfigDialog,  emitStateUpdate]);
 
     const handleConfigChange = (key: keyof TempConfig, value: string) => {
         setTempConfig(prev => ({ ...prev, [key]: value }));

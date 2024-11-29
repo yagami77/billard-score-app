@@ -4,13 +4,16 @@ import { Trophy } from 'lucide-react';
 
 // Définition des types des props
 interface WinnerDisplayProps {
-    gagnant: number; // Indice du joueur gagnant (ou changez à string si c'est une clé)
-    nomJoueurs: string[]; // Tableau contenant les noms des joueurs
+    gagnant: "joueur1" | "joueur2"; // Clé identifiant le joueur gagnant
+    nomJoueurs: {
+        joueur1: string;
+        joueur2: string;
+    }; // Objet contenant les noms des joueurs
     setsGagnes: {
         joueur1: number;
         joueur2: number;
     }; // Score final des joueurs
-    onNewGame: () => void; // Fonction appelée pour une nouvelle partie
+    onNewGame: () => void; // Fonction appelée pour lancer une nouvelle partie
 }
 
 const WinnerDisplay: React.FC<WinnerDisplayProps> = ({
@@ -19,7 +22,7 @@ const WinnerDisplay: React.FC<WinnerDisplayProps> = ({
                                                          setsGagnes,
                                                          onNewGame,
                                                      }) => {
-    if (gagnant === undefined || gagnant === null) return null; // Vérification supplémentaire
+    if (!gagnant) return null; // Vérification si gagnant est défini
 
     return (
         <div className="absolute inset-0 bg-blue-900/50 flex items-center justify-center z-10 rounded-lg">
