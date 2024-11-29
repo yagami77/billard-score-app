@@ -13,37 +13,30 @@ interface ConfigDialogProps {
     isOpen: boolean;
     onConfig: (config: { nbSetsGagnants: number; scoreParSet: number }) => void;
     tempConfig: {
-        nbSetsGagnants: string | number;
-        scoreParSet: string | number;
+        nbSetsGagnants: string; // Utilisation cohérente avec les valeurs textuelles
+        scoreParSet: string;
     };
-    onTempConfigChange: (key: "nbSetsGagnants" | "scoreParSet", value: number) => void;
+    onTempConfigChange: (key: 'nbSetsGagnants' | 'scoreParSet', value: string) => void; // Types stricts
 }
 
 const ConfigDialog: React.FC<ConfigDialogProps> = ({ isOpen, onConfig, tempConfig, onTempConfigChange }) => {
-    const isConfigValid =
-        Number(tempConfig.nbSetsGagnants) > 0 && Number(tempConfig.scoreParSet) > 0;
-
     return (
         <AlertDialog open={isOpen}>
             <AlertDialogContent className="bg-white">
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="text-blue-900">
-                        Configuration de la partie
-                    </AlertDialogTitle>
+                    <AlertDialogTitle className="text-blue-900">Configuration de la partie</AlertDialogTitle>
                     <div className="space-y-4">
-                        {/* Input for number of sets */}
+                        {/* Nombre de Sets Gagnants */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">
-                                Nombre de sets gagnants
-                            </label>
+                            <label className="text-sm font-medium">Nombre de sets gagnants</label>
                             <Input
                                 type="number"
                                 placeholder="Ex: 2 (pour une partie en 2 sets gagnants)"
                                 value={tempConfig.nbSetsGagnants}
                                 onChange={(e) => {
-                                    const value = parseInt(e.target.value, 10);
-                                    if (!isNaN(value) && value > 0) {
-                                        onTempConfigChange("nbSetsGagnants", value);
+                                    const value = e.target.value; // Reste une chaîne
+                                    if (value === '' || /^[0-9]+$/.test(value)) {
+                                        onTempConfigChange('nbSetsGagnants', value);
                                     }
                                 }}
                                 min="1"
@@ -51,19 +44,17 @@ const ConfigDialog: React.FC<ConfigDialogProps> = ({ isOpen, onConfig, tempConfi
                             />
                         </div>
 
-                        {/* Input for points per set */}
+                        {/* Points par Set */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">
-                                Points par set
-                            </label>
+                            <label className="text-sm font-medium">Points par set</label>
                             <Input
                                 type="number"
                                 placeholder="Ex: 60 ou 100"
                                 value={tempConfig.scoreParSet}
                                 onChange={(e) => {
-                                    const value = parseInt(e.target.value, 10);
-                                    if (!isNaN(value) && value > 0) {
-                                        onTempConfigChange("scoreParSet", value);
+                                    const value = e.target.value; // Reste une chaîne
+                                    if (value === '' || /^[0-9]+$/.test(value)) {
+                                        onTempConfigChange('scoreParSet', value);
                                     }
                                 }}
                                 min="1"
@@ -73,17 +64,17 @@ const ConfigDialog: React.FC<ConfigDialogProps> = ({ isOpen, onConfig, tempConfi
                     </div>
                 </AlertDialogHeader>
 
-                {/* Footer with validation */}
+                {/* Footer avec bouton d'action */}
                 <AlertDialogFooter>
                     <AlertDialogAction
                         onClick={() =>
                             onConfig({
-                                nbSetsGagnants: Number(tempConfig.nbSetsGagnants),
-                                scoreParSet: Number(tempConfig.scoreParSet),
+                                nbSetsGagnants: parseInt(tempConfig.nbSetsGagnants, 10),
+                                scoreParSet: parseInt(tempConfig.scoreParSet, 10),
                             })
                         }
                         className="bg-blue-600 hover:bg-blue-700 text-white"
-                        disabled={!isConfigValid}
+                        disabled={!tempConfig.nbSetsGagnants || !tempConfig.scoreParSet}
                     >
                         Commencer la partie
                     </AlertDialogAction>
