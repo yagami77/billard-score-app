@@ -1,28 +1,38 @@
 import { createServer } from 'http';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { NextRequest } from 'next/server';
+
+// Définir le type d'état de jeu
+interface GameState {
+    scores: { [player: string]: number }; // Scores des joueurs
+    setsGagnes: { [player: string]: number }; // Sets gagnés par joueur
+    config: { nbSetsGagnants: number; scoreParSet: number }; // Configuration de la partie
+    // Ajoutez d'autres propriétés ici si nécessaire
+}
+
+// Map pour stocker les états des tables
+const tableStates = new Map<string, GameState>();
+
+// Set pour stocker les connexions des dashboards
+const dashboardSockets = new Set<Socket>();
 
 const httpServer = createServer();
 const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: "http://localhost:3000", // Remplacez par l'URL de production si nécessaire
         methods: ["GET", "POST"]
     }
 });
 
-// Stockage des états des tables et des connexions dashboard
-const tableStates = new Map();
-const dashboardSockets = new Set();
-
-io.on('connection', (socket) => {
+io.on('connection', (socket: Socket) => {
     let currentRoom: string | null = null;
     let isDashboard = false;
 
-    // Gestion connexion dashboard
     socket.on('joinDashboard', () => {
         isDashboard = true;
         dashboardSockets.add(socket);
-        // Envoyer l'état actuel de toutes les tables
+
+        // Envoyer l'état actuel de toutes les tables au dashboard
         const currentGames = Array.from(tableStates.entries()).map(([roomCode, gameState]) => ({
             roomCode,
             gameState,
@@ -31,8 +41,7 @@ io.on('connection', (socket) => {
         socket.emit('dashboardUpdate', currentGames);
     });
 
-    // Gestion connexion table
-    socket.on('joinRoom', (roomCode) => {
+    socket.on('joinRoom', (roomCode: string) => {
         console.log(`Client joining room: ${roomCode}`);
 
         if (currentRoom) {
@@ -46,35 +55,29 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Mise à jour état
-    socket.on('updateState', (roomCode, newState) => {
+    socket.on('updateState', (roomCode: string, newState: GameState) => {
         tableStates.set(roomCode, newState);
 
-        // Diffuser aux clients de la table
         socket.to(roomCode).emit('stateUpdate', newState);
 
-        // Diffuser aux dashboards
         const update = {
             roomCode,
             gameState: newState,
             lastUpdate: new Date()
         };
-        dashboardSockets.forEach(dashSocket => {
+        dashboardSockets.forEach((dashSocket) => {
             dashSocket.emit('gameUpdate', update);
         });
     });
 
-    // Déconnexion
     socket.on('disconnect', () => {
         if (isDashboard) {
             dashboardSockets.delete(socket);
         } else if (currentRoom) {
-            // Si toutes les connexions d'une table sont fermées, retirer la table
             const room = io.sockets.adapter.rooms.get(currentRoom);
             if (!room || room.size === 0) {
                 tableStates.delete(currentRoom);
-                // Informer les dashboards
-                dashboardSockets.forEach(dashSocket => {
+                dashboardSockets.forEach((dashSocket) => {
                     dashSocket.emit('gameEnded', currentRoom);
                 });
             }
@@ -82,7 +85,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// Endpoint Next.js
 export async function GET(request: NextRequest) {
     if (request.headers.get('upgrade') !== 'websocket') {
         return new Response('Requires WebSocket connection', { status: 426 });
