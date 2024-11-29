@@ -1,16 +1,19 @@
 import React from 'react';
-import { Button } from '@/app/components/ui/button';  // Chemin corrigé
+import { Button } from '@/app/components/ui/button'; // Chemin corrigé
 import { Minus, Delete } from 'lucide-react';
 
+// Définition du type pour `Player` depuis le composant principal
+type Player = 'joueur1' | 'joueur2';
+
 interface NumPadProps {
-    joueur: string;
+    joueur: Player; // Alignement du type avec le composant principal
     isActive: boolean;
     tempPoints: string;
     isDeducting: boolean;
-    onToggleDeducting: (joueur: string) => void;
-    onAddDigit: (joueur: string, digit: string) => void;
-    onClear: (joueur: string) => void;
-    onApplyPoints: (joueur: string) => void;
+    onToggleDeducting: (joueur: Player) => void;
+    onAddDigit: (joueur: Player, digit: string) => void;
+    onClear: (joueur: Player) => void;
+    onApplyPoints: (joueur: Player) => void;
 }
 
 const NumPad = ({
