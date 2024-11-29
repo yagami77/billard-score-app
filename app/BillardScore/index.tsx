@@ -22,26 +22,52 @@ import InfosPartie from './InfosPartie';
 import WinnerDisplay from './WinnerDisplay';
 import ConfigDialog from './ConfigDialog';
 
-const BillardScore = () => {
-    const [scores, setScores] = useState({ joueur1: 0, joueur2: 0 });
-    const [setsGagnes, setSetsGagnes] = useState({ joueur1: 0, joueur2: 0 });
-    const [nomJoueurs, setNomJoueurs] = useState({ joueur1: "Joueur 1", joueur2: "Joueur 2" });
-    const [tempPoints, setTempPoints] = useState({ joueur1: "", joueur2: "" });
-    const [isDeducting, setIsDeducting] = useState({ joueur1: false, joueur2: false });
-    const [activePlayer, setActivePlayer] = useState('joueur1');
-    const [configPartie, setConfigPartie] = useState({ nbSetsGagnants: 0, scoreParSet: 0 });
-    const [tempConfig, setTempConfig] = useState({ nbSetsGagnants: "", scoreParSet: "" });
+// Définition des types pour les joueurs, scores et configurations
+type Player = 'joueur1' | 'joueur2';
+
+interface Scores {
+    joueur1: number;
+    joueur2: number;
+}
+
+interface SetsGagnes {
+    joueur1: number;
+    joueur2: number;
+}
+
+interface ConfigPartie {
+    nbSetsGagnants: number;
+    scoreParSet: number;
+}
+
+interface TempConfig {
+    nbSetsGagnants: string;
+    scoreParSet: string;
+}
+
+const BillardScore: React.FC = () => {
+    const [scores, setScores] = useState<Scores>({ joueur1: 0, joueur2: 0 });
+    const [setsGagnes, setSetsGagnes] = useState<SetsGagnes>({ joueur1: 0, joueur2: 0 });
+    const [nomJoueurs, setNomJoueurs] = useState<Record<Player, string>>({
+        joueur1: "Joueur 1",
+        joueur2: "Joueur 2"
+    });
+    const [tempPoints, setTempPoints] = useState<Record<Player, string>>({ joueur1: "", joueur2: "" });
+    const [isDeducting, setIsDeducting] = useState<Record<Player, boolean>>({ joueur1: false, joueur2: false });
+    const [activePlayer, setActivePlayer] = useState<Player>('joueur1');
+    const [configPartie, setConfigPartie] = useState<ConfigPartie>({ nbSetsGagnants: 0, scoreParSet: 0 });
+    const [tempConfig, setTempConfig] = useState<TempConfig>({ nbSetsGagnants: "", scoreParSet: "" });
     const [showConfigDialog, setShowConfigDialog] = useState(true);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
-    const [gagnant, setGagnant] = useState(null);
-    const [editingNames, setEditingNames] = useState({
+    const [gagnant, setGagnant] = useState<Player | null>(null);
+    const [editingNames, setEditingNames] = useState<Record<Player, boolean>>({
         joueur1: false,
         joueur2: false
     });
 
     const [roomCode] = useState(() => `TABLE_${Math.random().toString(36).substr(2, 6)}`);
 
-    const { emitStateUpdate } = useSocket(roomCode, (newState) => {
+    const { emitStateUpdate } = useSocket(roomCode, (newState: any) => {
         console.log('BillardScore received state:', newState);
     });
 
@@ -60,16 +86,16 @@ const BillardScore = () => {
         }
     }, [scores, setsGagnes, nomJoueurs, activePlayer, configPartie, gagnant, showConfigDialog]);
 
-    const handleConfigChange = (key, value) => {
+    const handleConfigChange = (key: keyof TempConfig, value: string) => {
         setTempConfig(prev => ({ ...prev, [key]: value }));
     };
 
-    const handleConfigPartie = (config) => {
+    const handleConfigPartie = (config: ConfigPartie) => {
         setConfigPartie(config);
         setShowConfigDialog(false);
     };
 
-    const addDigit = (joueur, digit) => {
+    const addDigit = (joueur: Player, digit: string) => {
         setActivePlayer(joueur);
         const newValue = tempPoints[joueur] + digit;
         if (newValue.length <= 2) {
@@ -77,7 +103,7 @@ const BillardScore = () => {
         }
     };
 
-    const applyPoints = (joueur) => {
+    const applyPoints = (joueur: Player) => {
         const points = parseInt(tempPoints[joueur]) || 0;
         if (points > 0) {
             const newScore = Math.max(0, scores[joueur] + (isDeducting[joueur] ? -points : points));
@@ -107,13 +133,13 @@ const BillardScore = () => {
         }
     };
 
-    const toggleDeducting = (joueur) => {
+    const toggleDeducting = (joueur: Player) => {
         setActivePlayer(joueur);
         setIsDeducting(prev => ({ ...prev, [joueur]: true }));
         setTempPoints(prev => ({ ...prev, [joueur]: "" }));
     };
 
-    const clearTempPoints = (joueur) => {
+    const clearTempPoints = (joueur: Player) => {
         setTempPoints(prev => ({ ...prev, [joueur]: "" }));
         setIsDeducting(prev => ({ ...prev, [joueur]: false }));
     };
@@ -130,21 +156,21 @@ const BillardScore = () => {
         setTempConfig({ nbSetsGagnants: "", scoreParSet: "" });
     };
 
-    const startEditingName = (joueur) => {
+    const startEditingName = (joueur: Player) => {
         setEditingNames(prev => ({
             ...prev,
             [joueur]: true
         }));
     };
 
-    const handleNameChange = (joueur, value) => {
+    const handleNameChange = (joueur: Player, value: string) => {
         setNomJoueurs(prev => ({
             ...prev,
             [joueur]: value
         }));
     };
 
-    const finishEditingName = (joueur) => {
+    const finishEditingName = (joueur: Player) => {
         setEditingNames(prev => ({
             ...prev,
             [joueur]: false
@@ -323,6 +349,5 @@ const BillardScore = () => {
         </div>
     );
 };
-
 
 export default BillardScore;
