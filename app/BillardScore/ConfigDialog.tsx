@@ -16,16 +16,10 @@ interface ConfigDialogProps {
         nbSetsGagnants: string | number;
         scoreParSet: string | number;
     };
-    onTempConfigChange: (key: keyof typeof tempConfig, value: number) => void;
+    onTempConfigChange: (key: "nbSetsGagnants" | "scoreParSet", value: number) => void;
 }
 
-const ConfigDialog: React.FC<ConfigDialogProps> = ({
-                                                       isOpen,
-                                                       onConfig,
-                                                       tempConfig,
-                                                       onTempConfigChange,
-                                                   }) => {
-    // Convert the temporary config values to numbers for validation
+const ConfigDialog: React.FC<ConfigDialogProps> = ({ isOpen, onConfig, tempConfig, onTempConfigChange }) => {
     const isConfigValid =
         Number(tempConfig.nbSetsGagnants) > 0 && Number(tempConfig.scoreParSet) > 0;
 
@@ -47,7 +41,7 @@ const ConfigDialog: React.FC<ConfigDialogProps> = ({
                                 placeholder="Ex: 2 (pour une partie en 2 sets gagnants)"
                                 value={tempConfig.nbSetsGagnants}
                                 onChange={(e) => {
-                                    const value = parseInt(e.target.value);
+                                    const value = parseInt(e.target.value, 10);
                                     if (!isNaN(value) && value > 0) {
                                         onTempConfigChange("nbSetsGagnants", value);
                                     }
@@ -67,7 +61,7 @@ const ConfigDialog: React.FC<ConfigDialogProps> = ({
                                 placeholder="Ex: 60 ou 100"
                                 value={tempConfig.scoreParSet}
                                 onChange={(e) => {
-                                    const value = parseInt(e.target.value);
+                                    const value = parseInt(e.target.value, 10);
                                     if (!isNaN(value) && value > 0) {
                                         onTempConfigChange("scoreParSet", value);
                                     }
