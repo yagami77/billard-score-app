@@ -13,21 +13,35 @@ interface ConfigDialogProps {
     isOpen: boolean;
     onConfig: (config: { nbSetsGagnants: number; scoreParSet: number }) => void;
     tempConfig: {
-        nbSetsGagnants: number | string;
-        scoreParSet: number | string;
+        nbSetsGagnants: string | number;
+        scoreParSet: string | number;
     };
-    onTempConfigChange: (key: string, value: number) => void;
+    onTempConfigChange: (key: keyof typeof tempConfig, value: number) => void;
 }
 
-const ConfigDialog: React.FC<ConfigDialogProps> = ({ isOpen, onConfig, tempConfig, onTempConfigChange }) => {
+const ConfigDialog: React.FC<ConfigDialogProps> = ({
+                                                       isOpen,
+                                                       onConfig,
+                                                       tempConfig,
+                                                       onTempConfigChange,
+                                                   }) => {
+    // Convert the temporary config values to numbers for validation
+    const isConfigValid =
+        Number(tempConfig.nbSetsGagnants) > 0 && Number(tempConfig.scoreParSet) > 0;
+
     return (
         <AlertDialog open={isOpen}>
             <AlertDialogContent className="bg-white">
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="text-blue-900">Configuration de la partie</AlertDialogTitle>
+                    <AlertDialogTitle className="text-blue-900">
+                        Configuration de la partie
+                    </AlertDialogTitle>
                     <div className="space-y-4">
+                        {/* Input for number of sets */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Nombre de sets gagnants</label>
+                            <label className="text-sm font-medium">
+                                Nombre de sets gagnants
+                            </label>
                             <Input
                                 type="number"
                                 placeholder="Ex: 2 (pour une partie en 2 sets gagnants)"
@@ -35,15 +49,19 @@ const ConfigDialog: React.FC<ConfigDialogProps> = ({ isOpen, onConfig, tempConfi
                                 onChange={(e) => {
                                     const value = parseInt(e.target.value);
                                     if (!isNaN(value) && value > 0) {
-                                        onTempConfigChange('nbSetsGagnants', value);
+                                        onTempConfigChange("nbSetsGagnants", value);
                                     }
                                 }}
                                 min="1"
                                 className="mt-1"
                             />
                         </div>
+
+                        {/* Input for points per set */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Points par set</label>
+                            <label className="text-sm font-medium">
+                                Points par set
+                            </label>
                             <Input
                                 type="number"
                                 placeholder="Ex: 60 ou 100"
@@ -51,7 +69,7 @@ const ConfigDialog: React.FC<ConfigDialogProps> = ({ isOpen, onConfig, tempConfi
                                 onChange={(e) => {
                                     const value = parseInt(e.target.value);
                                     if (!isNaN(value) && value > 0) {
-                                        onTempConfigChange('scoreParSet', value);
+                                        onTempConfigChange("scoreParSet", value);
                                     }
                                 }}
                                 min="1"
@@ -60,11 +78,18 @@ const ConfigDialog: React.FC<ConfigDialogProps> = ({ isOpen, onConfig, tempConfi
                         </div>
                     </div>
                 </AlertDialogHeader>
+
+                {/* Footer with validation */}
                 <AlertDialogFooter>
                     <AlertDialogAction
-                        onClick={() => onConfig(tempConfig as { nbSetsGagnants: number; scoreParSet: number })}
+                        onClick={() =>
+                            onConfig({
+                                nbSetsGagnants: Number(tempConfig.nbSetsGagnants),
+                                scoreParSet: Number(tempConfig.scoreParSet),
+                            })
+                        }
                         className="bg-blue-600 hover:bg-blue-700 text-white"
-                        disabled={!tempConfig.nbSetsGagnants || !tempConfig.scoreParSet}
+                        disabled={!isConfigValid}
                     >
                         Commencer la partie
                     </AlertDialogAction>
