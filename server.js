@@ -1,10 +1,12 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { createServer } = require('http');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { Server } = require('socket.io');
 
 const httpServer = createServer();
 const io = new Server(httpServer, {
     cors: {
-        origin: process.env.NEXT_PUBLIC_ORIGIN_URL || "http://localhost:3000",
+        origin: process.env.NEXT_PUBLIC_ORIGIN_URL,
         methods: ["GET", "POST"]
     }
 });
