@@ -1,5 +1,5 @@
 // Importations nécessaires
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { createServer } from 'http';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { NextRequest } from 'next/server';
@@ -12,7 +12,7 @@ const io = new Server(httpServer, {
     },
 });
 
-const dashboardSockets = new Set<SocketIO.Socket>();
+const dashboardSockets = new Set<Socket>();
 const tableStates = new Map<string, GameState>();
 
 type GameState = {
@@ -20,8 +20,8 @@ type GameState = {
 };
 
 const ioHandler = (req: NextApiRequest, res: NextApiResponse) => {
-    if (!res.socket.server.io) {
-        const io = new Server(res.socket.server as unknown as any, {
+    if (!(res.socket as any).server.io) {
+        const io = new Server((res.socket as any).server, {
             path: "/api/ws",
             addTrailingSlash: false,
             cors: {
@@ -97,7 +97,7 @@ const ioHandler = (req: NextApiRequest, res: NextApiResponse) => {
             });
         });
 
-        res.socket.server.io = io;
+        (res.socket as any).server.io = io;
         console.log('WebSocket server initialized');
     }
     res.end();
