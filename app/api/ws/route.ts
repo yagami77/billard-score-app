@@ -1,7 +1,7 @@
 // Importations nécessaires
 import { Server } from 'socket.io';
 import { createServer } from 'http';
-import { NextApiRequest } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { NextRequest } from 'next/server';
 
 const httpServer = createServer();
@@ -12,16 +12,16 @@ const io = new Server(httpServer, {
     },
 });
 
-const dashboardSockets = new Set();
+const dashboardSockets = new Set<SocketIO.Socket>();
 const tableStates = new Map<string, GameState>();
 
 type GameState = {
     // Définir les propriétés de GameState ici
 };
 
-const ioHandler = (req: NextApiRequest, res: any) => {
+const ioHandler = (req: NextApiRequest, res: NextApiResponse) => {
     if (!res.socket.server.io) {
-        const io = new Server(res.socket.server as any, {
+        const io = new Server(res.socket.server as unknown as any, {
             path: "/api/ws",
             addTrailingSlash: false,
             cors: {
