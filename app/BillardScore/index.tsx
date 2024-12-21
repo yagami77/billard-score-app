@@ -207,6 +207,16 @@ const BillardScore = () => {
         }
     };
 
+    const getOverlayUrl = (roomCode: string) => {
+        if (typeof window !== 'undefined') {
+            const baseUrl = window.location.host.includes('localhost') ?
+                'http://localhost:3000' :
+                'https://www.5quilles.com';
+            return `${baseUrl}/overlay?table=${roomCode}`;
+        }
+        return `https://www.5quilles.com/overlay?table=${roomCode}`;
+    };
+
     // Rendu du composant
     return (
         <div className="w-full min-h-screen bg-white p-4">
@@ -219,7 +229,7 @@ const BillardScore = () => {
                             Code de table : <span className="font-mono font-bold">{roomCode}</span>
                         </p>
                         <p className="text-xs text-blue-600 mt-1">
-                            Utilisez ce code dans OBS : http://localhost:3000/overlay?table={roomCode}
+                            Utilisez ce code dans OBS : {getOverlayUrl(roomCode)}
                         </p>
                     </div>
                 )}
