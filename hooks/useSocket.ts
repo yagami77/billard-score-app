@@ -5,17 +5,21 @@ import { GameState } from '../types/types';
 const getSocketUrl = () => {
     if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
         // En production (5quilles.com)
         if (hostname === '5quilles.com' || hostname === 'www.5quilles.com') {
-            return `${protocol}//${hostname}`;
+            return 'wss://www.5quilles.com';
+        }
+
+        // Pour Vercel Preview
+        if (hostname.includes('vercel.app')) {
+            return `wss://${hostname}`;
         }
 
         // En développement
-        return 'ws://localhost:3001';
+        return 'http://localhost:3001';
     }
-    return 'ws://localhost:3001';
+    return 'http://localhost:3001';
 };
 
 type SocketCallback = (state: GameState) => void;
@@ -32,13 +36,14 @@ export const useSocket = (roomCode: string, onStateUpdate: SocketCallback) => {
         console.log('🔌 Tentative de connexion à:', socketUrl);
 
         socketRef.current = io(socketUrl, {
-            transports: ['websocket'],
-            reconnection: false,
-            timeout: 5000,
-            path: '/socket.io',
+            path: '/api/ws/socket.io',
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 10,
+            reconnectionDelay: 1000,
+            timeout: 10000,
             forceNew: true,
-            secure: window.location.protocol === 'https:',
-            rejectUnauthorized: false
+            secure: true
         });
 
         const socket = socketRef.current;
@@ -56,7 +61,10 @@ export const useSocket = (roomCode: string, onStateUpdate: SocketCallback) => {
 
         socket.on('connect_error', (error) => {
             console.error('❌ Erreur de connexion:', error);
-            handleReconnect();
+            if (socket.io.opts.transports[0] === 'websocket') {
+                console.log('🔄 Tentative de reconnexion en polling...');
+                socket.io.opts.transports = ['polling', 'websocket'];
+            }
         });
 
         socket.on('disconnect', (reason) => {

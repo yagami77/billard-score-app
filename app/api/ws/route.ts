@@ -4,9 +4,15 @@ import { NextRequest } from 'next/server';
 
 const httpServer = createServer();
 const io = new Server(httpServer, {
+    path: '/api/ws/socket.io',  // Ajout du path correct
     cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST"]
+        origin: [
+            "http://localhost:3000",
+            "https://www.5quilles.com",
+            "https://billard-score-app-git-stable1-rahmani-alaes-projects.vercel.app"
+        ],
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
@@ -15,11 +21,13 @@ const tableStates = new Map();
 const dashboardSockets = new Set();
 
 io.on('connection', (socket) => {
+    console.log('Nouvelle connexion socket:', socket.id);
     let currentRoom: string | null = null;
     let isDashboard = false;
 
     // Gestion connexion dashboard
     socket.on('joinDashboard', () => {
+        console.log('Client rejoint le dashboard:', socket.id);
         isDashboard = true;
         dashboardSockets.add(socket);
         // Envoyer l'état actuel de toutes les tables
@@ -33,7 +41,7 @@ io.on('connection', (socket) => {
 
     // Gestion connexion table
     socket.on('joinRoom', (roomCode) => {
-        console.log(`Client joining room: ${roomCode}`);
+        console.log(`Client ${socket.id} rejoint la table: ${roomCode}`);
 
         if (currentRoom) {
             socket.leave(currentRoom);
@@ -48,6 +56,7 @@ io.on('connection', (socket) => {
 
     // Mise à jour état
     socket.on('updateState', (roomCode, newState) => {
+        console.log(`Mise à jour de l'état pour ${roomCode}:`, newState);
         tableStates.set(roomCode, newState);
 
         // Diffuser aux clients de la table
@@ -64,8 +73,14 @@ io.on('connection', (socket) => {
         });
     });
 
+    // Gestion des erreurs
+    socket.on('error', (error) => {
+        console.error('Erreur socket:', error);
+    });
+
     // Déconnexion
     socket.on('disconnect', () => {
+        console.log(`Client déconnecté: ${socket.id}`);
         if (isDashboard) {
             dashboardSockets.delete(socket);
         } else if (currentRoom) {
@@ -82,7 +97,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// Endpoint Next.js
 export async function GET(request: NextRequest) {
     if (request.headers.get('upgrade') !== 'websocket') {
         return new Response('Requires WebSocket connection', { status: 426 });
@@ -90,7 +104,8 @@ export async function GET(request: NextRequest) {
 
     const PORT = process.env.PORT || 3001;
     httpServer.listen(PORT, () => {
-        console.log(`WebSocket server running on port ${PORT}`);
+        console.log(`🚀 Serveur WebSocket démarré sur le port ${PORT}`);
+        console.log('👌 CORS configuré pour:', io.origins());
     });
 
     return new Response('WebSocket server is running');
