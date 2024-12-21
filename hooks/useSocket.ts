@@ -1,57 +1,66 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { GameState } from '../types/types';
 
-type SocketCallback = (state: GameState) => void;
+// Fonction pour déterminer l'URL du WebSocket
+const getWebSocketUrl = () => {
+    if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        if (hostname === '5quilles.com' || hostname === 'www.5quilles.com') {
+            return 'wss://www.5quilles.com'; // URL WebSocket en production
+        }
+    }
+    return 'ws://localhost:3001'; // URL WebSocket en développement
+};
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'http://localhost:3001';
+type SocketCallback = (state: GameState) => void;
 
 export const useSocket = (roomCode: string, onStateUpdate: SocketCallback) => {
     const socketRef = useRef<Socket | null>(null);
+    const reconnectAttemptsRef = useRef(0);
 
     useEffect(() => {
-        // Création de la connexion
-        socketRef.current = io(SOCKET_URL);
-
-        console.log('Connecting to WebSocket server...');
-
-        // Gestion de la connexion
-        socketRef.current.on('connect', () => {
-            console.log('Connected to WebSocket server');
-            // Rejoindre la salle après la connexion
-            if (socketRef.current) {
-                socketRef.current.emit('joinRoom', roomCode);
-                console.log(`Joining room: ${roomCode}`);
-            }
+        // Configuration du socket avec gestion de la reconnexion
+        socketRef.current = io(getWebSocketUrl(), {
+            transports: ['websocket'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            timeout: 5000
         });
 
-        // Écoute des mises à jour d'état
+        console.log('🔄 Connexion au serveur WebSocket...');
+
+        socketRef.current.on('connect', () => {
+            console.log('✅ Connecté au serveur WebSocket');
+            reconnectAttemptsRef.current = 0;
+            socketRef.current?.emit('joinRoom', roomCode);
+        });
+
         socketRef.current.on('stateUpdate', (newState: GameState) => {
-            console.log('Received state update:', newState);
+            console.log('📥 Mise à jour reçue:', newState);
             onStateUpdate(newState);
         });
 
-        // Gestion des erreurs
         socketRef.current.on('connect_error', (error) => {
-            console.error('WebSocket connection error:', error);
+            console.error('❌ Erreur de connexion:', error);
+            reconnectAttemptsRef.current++;
         });
 
-        // Nettoyage
         return () => {
             if (socketRef.current) {
-                console.log('Disconnecting from WebSocket server...');
+                console.log('🔌 Déconnexion du serveur WebSocket');
                 socketRef.current.disconnect();
             }
         };
     }, [roomCode]);
 
-    // Fonction pour émettre des mises à jour d'état
     const emitStateUpdate = (newState: GameState) => {
         if (socketRef.current?.connected) {
-            console.log('Emitting state update:', newState);
+            console.log('📤 Émission mise à jour:', newState);
             socketRef.current.emit('updateState', roomCode, newState);
         } else {
-            console.warn('Cannot emit state update: socket not connected');
+            console.warn('⚠️ Impossible d\'émettre la mise à jour: socket non connecté');
         }
     };
 

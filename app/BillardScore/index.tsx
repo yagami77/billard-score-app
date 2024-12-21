@@ -38,32 +38,42 @@ const BillardScore = () => {
         joueur1: false,
         joueur2: false
     });
-    const [localStateChanged, setLocalStateChanged] = useState(false);
-    const [isServerUpdate, setIsServerUpdate] = useState(false);
 
     const [roomCode] = useState(() => `TABLE_${Math.random().toString(36).substr(2, 6)}`);
 
+    // Ajout d'un état pour suivre si la mise à jour vient du serveur
+
+    const [isServerUpdate, setIsServerUpdate] = useState<boolean>(false);
+
     // Configuration Socket avec synchronisation bidirectionnelle
     const { emitStateUpdate } = useSocket(roomCode, (newState) => {
+
         console.log('💫 Réception mise à jour:', newState);
-        setIsServerUpdate(true);
+        // Mise à jour synchronisée des états
+        setIsServerUpdate(true); // Marquer que c'est une mise à jour serveur
         if (newState.scores) setScores(newState.scores);
         if (newState.setsGagnes) setSetsGagnes(newState.setsGagnes);
         if (newState.nomJoueurs) setNomJoueurs(newState.nomJoueurs);
         if (newState.activePlayer) setActivePlayer(newState.activePlayer);
         if (newState.configPartie) setConfigPartie(newState.configPartie);
-        if ('gagnant' in newState) setGagnant(newState.gagnant);
-        setIsServerUpdate(false);
+
+        if ('gagnant' in newState) {
+            setGagnant(newState.gagnant);
+        }
+        setIsServerUpdate(false); // Réinitialiser le marqueur
     });
 
-    // Effet pour marquer les changements d'état locaux
+    // Ajout d'un useEffect dédié pour gérer les changements d'état locaux
+    const [localStateChanged, setLocalStateChanged] = useState(false);
+
+// Effet pour marquer les changements d'état locaux
     useEffect(() => {
         if (!isServerUpdate && !showConfigDialog) {
             setLocalStateChanged(true);
         }
-    }, [scores, setsGagnes, nomJoueurs, activePlayer, configPartie, gagnant, isServerUpdate, showConfigDialog]);
+    }, [scores, setsGagnes, nomJoueurs, activePlayer, configPartie, gagnant]);
 
-    // Effet pour émettre les mises à jour vers le serveur
+// Effet pour émettre les mises à jour vers le serveur
     useEffect(() => {
         if (localStateChanged && !isServerUpdate && !showConfigDialog) {
             const gameState = {
@@ -78,7 +88,25 @@ const BillardScore = () => {
             emitStateUpdate(gameState);
             setLocalStateChanged(false);
         }
-    }, [localStateChanged, isServerUpdate, showConfigDialog, scores, setsGagnes, nomJoueurs, activePlayer, configPartie, gagnant, emitStateUpdate]);
+    }, [localStateChanged, isServerUpdate, showConfigDialog]);
+
+
+
+    // Émission des mises à jour
+    useEffect(() => {
+        if (!showConfigDialog && !isServerUpdate) {
+            const gameState = {
+                scores,
+                setsGagnes,
+                nomJoueurs,
+                activePlayer,
+                configPartie,
+                gagnant
+            };
+            console.log('🔄 Émission mise à jour:', gameState);
+            emitStateUpdate(gameState);
+        }
+    }, [scores, setsGagnes, nomJoueurs, activePlayer, configPartie, gagnant, showConfigDialog, emitStateUpdate]);
 
     const handleConfigChange = (key, value) => {
         setTempConfig(prev => ({ ...prev, [key]: value }));
@@ -179,6 +207,7 @@ const BillardScore = () => {
         }
     };
 
+    // Rendu du composant
     return (
         <div className="w-full min-h-screen bg-white p-4">
             <div className="text-center mb-8">
