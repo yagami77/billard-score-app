@@ -38,33 +38,54 @@ const BillardScore = () => {
         joueur1: false,
         joueur2: false
     });
+    const [localStateChanged, setLocalStateChanged] = useState(false);
+    const [isServerUpdate, setIsServerUpdate] = useState(false);
 
     const [roomCode] = useState(() => `TABLE_${Math.random().toString(36).substr(2, 6)}`);
 
+    // Configuration Socket avec synchronisation bidirectionnelle
     const { emitStateUpdate } = useSocket(roomCode, (newState) => {
-        console.log('BillardScore received state:', newState);
+        console.log('💫 Réception mise à jour:', newState);
+        setIsServerUpdate(true);
+        if (newState.scores) setScores(newState.scores);
+        if (newState.setsGagnes) setSetsGagnes(newState.setsGagnes);
+        if (newState.nomJoueurs) setNomJoueurs(newState.nomJoueurs);
+        if (newState.activePlayer) setActivePlayer(newState.activePlayer);
+        if (newState.configPartie) setConfigPartie(newState.configPartie);
+        if ('gagnant' in newState) setGagnant(newState.gagnant);
+        setIsServerUpdate(false);
     });
 
+    // Effet pour marquer les changements d'état locaux
     useEffect(() => {
-        const gameState = {
-            scores,
-            setsGagnes,
-            nomJoueurs,
-            activePlayer,
-            configPartie,
-            gagnant
-        };
-
-        if (!showConfigDialog) {
-            emitStateUpdate(gameState);
+        if (!isServerUpdate && !showConfigDialog) {
+            setLocalStateChanged(true);
         }
-    }, [scores, setsGagnes, nomJoueurs, activePlayer, configPartie, gagnant, showConfigDialog]);
+    }, [scores, setsGagnes, nomJoueurs, activePlayer, configPartie, gagnant, isServerUpdate, showConfigDialog]);
+
+    // Effet pour émettre les mises à jour vers le serveur
+    useEffect(() => {
+        if (localStateChanged && !isServerUpdate && !showConfigDialog) {
+            const gameState = {
+                scores,
+                setsGagnes,
+                nomJoueurs,
+                activePlayer,
+                configPartie,
+                gagnant
+            };
+            console.log('🔄 Émission mise à jour:', gameState);
+            emitStateUpdate(gameState);
+            setLocalStateChanged(false);
+        }
+    }, [localStateChanged, isServerUpdate, showConfigDialog, scores, setsGagnes, nomJoueurs, activePlayer, configPartie, gagnant, emitStateUpdate]);
 
     const handleConfigChange = (key, value) => {
         setTempConfig(prev => ({ ...prev, [key]: value }));
     };
 
     const handleConfigPartie = (config) => {
+        console.log('📝 Configuration partie:', config);
         setConfigPartie(config);
         setShowConfigDialog(false);
     };
@@ -80,6 +101,7 @@ const BillardScore = () => {
     const applyPoints = (joueur) => {
         const points = parseInt(tempPoints[joueur]) || 0;
         if (points > 0) {
+            console.log(`➕ Points ${joueur}:`, points, isDeducting[joueur] ? '(retrait)' : '(ajout)');
             const newScore = Math.max(0, scores[joueur] + (isDeducting[joueur] ? -points : points));
 
             if (newScore >= configPartie.scoreParSet) {
@@ -323,6 +345,5 @@ const BillardScore = () => {
         </div>
     );
 };
-
 
 export default BillardScore;

@@ -2,23 +2,28 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 
 const httpServer = createServer();
-
-// Configuration CORS dynamique basée sur l'environnement
-const allowedOrigins = [
-    'http://localhost:3000',          // Développement local
-    'https://www.5quilles.com',       // Production
-    'https://5quilles.com',           // Production sans www
-    process.env.NEXT_PUBLIC_ORIGIN_URL // URL depuis les variables d'environnement
-].filter(Boolean); // Enlève les valeurs null/undefined
-
 const io = new Server(httpServer, {
     cors: {
-        origin: allowedOrigins,
-        methods: ["GET", "POST"],
-        credentials: true
+        origin: ["http://localhost:3000", "https://www.5quilles.com"],
+        methods: ["GET", "POST"]
+    }
+});
+
+// Création de l'état initial d'une table
+const createInitialState = () => ({
+    scores: {
+        joueur1: 0,
+        joueur2: 0
     },
-    allowEIO3: true, // Support pour la version Engine.IO 3
-    transports: ['websocket', 'polling'] // Permet le fallback en polling si WebSocket échoue
+    setsGagnes: {
+        joueur1: 0,
+        joueur2: 0
+    },
+    nomJoueurs: {
+        joueur1: "Joueur 1",
+        joueur2: "Joueur 2"
+    },
+    gagnant: null
 });
 
 // Stockage des états des tables et des connexions dashboard
@@ -26,13 +31,13 @@ const tableStates = new Map();
 const dashboardSockets = new Set();
 
 io.on('connection', (socket) => {
-    console.log('New client connected from:', socket.handshake.headers.origin);
+    console.log('➡️ Nouvelle connexion socket:', socket.id);
     let currentRoom = null;
     let isDashboard = false;
 
     // Gestion connexion dashboard
     socket.on('joinDashboard', () => {
-        console.log('Client joining dashboard');
+        console.log('📊 Client rejoint le dashboard:', socket.id);
         isDashboard = true;
         dashboardSockets.add(socket);
         // Envoyer l'état actuel de toutes les tables
@@ -41,12 +46,13 @@ io.on('connection', (socket) => {
             gameState,
             lastUpdate: new Date()
         }));
+        console.log('État actuel envoyé au dashboard:', currentGames);
         socket.emit('dashboardUpdate', currentGames);
     });
 
     // Gestion connexion table
     socket.on('joinRoom', (roomCode) => {
-        console.log(`Client joining room: ${roomCode}`);
+        console.log(`🎱 Client ${socket.id} rejoint la table: ${roomCode}`);
 
         if (currentRoom) {
             socket.leave(currentRoom);
@@ -54,18 +60,26 @@ io.on('connection', (socket) => {
         socket.join(roomCode);
         currentRoom = roomCode;
 
-        if (tableStates.has(roomCode)) {
-            socket.emit('stateUpdate', tableStates.get(roomCode));
+        // Si la table n'existe pas, créer un état initial
+        if (!tableStates.has(roomCode)) {
+            console.log(`🆕 Création d'un nouvel état pour la table ${roomCode}`);
+            tableStates.set(roomCode, createInitialState());
         }
+
+        // Envoyer l'état actuel
+        const state = tableStates.get(roomCode);
+        console.log(`📤 Envoi de l'état pour ${roomCode}:`, state);
+        socket.emit('stateUpdate', state);
     });
 
     // Mise à jour état
     socket.on('updateState', (roomCode, newState) => {
-        console.log(`State update for room ${roomCode}:`, newState);
+        console.log(`🔄 Mise à jour de l'état pour ${roomCode}:`, newState);
         tableStates.set(roomCode, newState);
 
         // Diffuser aux clients de la table
         socket.to(roomCode).emit('stateUpdate', newState);
+        console.log(`État diffusé aux clients de la table ${roomCode}`);
 
         // Diffuser aux dashboards
         const update = {
@@ -76,23 +90,21 @@ io.on('connection', (socket) => {
         dashboardSockets.forEach(dashSocket => {
             dashSocket.emit('gameUpdate', update);
         });
-    });
-
-    // Gestion des erreurs socket
-    socket.on('error', (error) => {
-        console.error('Socket error:', error);
+        console.log('État diffusé aux dashboards');
     });
 
     // Déconnexion
     socket.on('disconnect', () => {
-        console.log('Client disconnected');
+        console.log(`👋 Client déconnecté: ${socket.id}`);
         if (isDashboard) {
             dashboardSockets.delete(socket);
+            console.log('Dashboard déconnecté');
         } else if (currentRoom) {
             // Si toutes les connexions d'une table sont fermées, retirer la table
             const room = io.sockets.adapter.rooms.get(currentRoom);
             if (!room || room.size === 0) {
                 tableStates.delete(currentRoom);
+                console.log(`Table ${currentRoom} supprimée car plus aucun client`);
                 // Informer les dashboards
                 dashboardSockets.forEach(dashSocket => {
                     dashSocket.emit('gameEnded', currentRoom);
@@ -102,14 +114,8 @@ io.on('connection', (socket) => {
     });
 });
 
-// Gestion des erreurs serveur
-httpServer.on('error', (error) => {
-    console.error('Server error:', error);
-});
-
-// Configuration du port dynamique
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
-    console.log(`WebSocket server running on port ${PORT}`);
-    console.log('Allowed origins:', allowedOrigins);
+    console.log(`🚀 Serveur WebSocket démarré sur le port ${PORT}`);
+    console.log('👌 CORS configuré pour:', ["http://localhost:3000", "https://www.5quilles.com"]);
 });
