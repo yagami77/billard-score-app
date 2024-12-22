@@ -4,16 +4,17 @@ import { GameState } from '../types/types';
 
 const getSocketUrl = () => {
     if (typeof window !== 'undefined') {
+        const protocol = window.location.protocol === 'https:' ? 'https://' : 'http://';
         const hostname = window.location.hostname;
 
         // En production (5quilles.com)
         if (hostname === '5quilles.com' || hostname === 'www.5quilles.com') {
-            return 'wss://www.5quilles.com';
+            return `${protocol}${hostname}`;
         }
 
         // Pour Vercel Preview
         if (hostname.includes('vercel.app')) {
-            return `wss://${hostname}`;
+            return `${protocol}${hostname}`;
         }
 
         // En développement
@@ -37,13 +38,15 @@ export const useSocket = (roomCode: string, onStateUpdate: SocketCallback) => {
 
         socketRef.current = io(socketUrl, {
             path: '/api/ws/socket.io',
-            transports: ['websocket', 'polling'],
+            transports: ['polling', 'websocket'],  // Polling en premier
             reconnection: true,
             reconnectionAttempts: 10,
             reconnectionDelay: 1000,
             timeout: 10000,
             forceNew: true,
-            secure: true
+            autoConnect: true,
+            rejectUnauthorized: false, // Important pour Vercel
+            withCredentials: true
         });
 
         const socket = socketRef.current;
