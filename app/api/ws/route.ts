@@ -4,10 +4,10 @@ import { NextRequest } from 'next/server';
 
 const httpServer = createServer();
 const io = new Server(httpServer, {
-    path: '/api/ws',  // Ajout du path correct
+    path: '/api/ws',
     cors: {
-        origin: '*',
-        methods: ["GET", "POST"],
+        origin: ['http://localhost:3000', 'https://www.5quilles.com'],
+        methods: ['GET', 'POST'],
         credentials: true
     }
 });

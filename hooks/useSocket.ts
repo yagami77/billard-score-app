@@ -4,13 +4,13 @@ import { GameState } from '../types/types';
 
 const getSocketUrl = () => {
     if (typeof window !== 'undefined') {
-        // En développement
+        // En développement local
         if (window.location.hostname === 'localhost') {
             return 'http://localhost:3001';
         }
 
         // En production (incluant Vercel et 5quilles.com)
-        return window.location.origin;
+        return '';  // URL vide pour utiliser l'URL relative
     }
     return 'http://localhost:3001';
 };
@@ -29,14 +29,14 @@ export const useSocket = (roomCode: string, onStateUpdate: SocketCallback) => {
         console.log('🔌 Tentative de connexion à:', socketUrl);
 
         socketRef.current = io(socketUrl, {
-            path: '/api/ws',  // Simplifié
-            transports: ['polling', 'websocket'],  // Polling d'abord
+            path: '/api/ws',
+            transports: ['polling', 'websocket'],
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
             timeout: 5000,
             forceNew: true,
-            rejectUnauthorized: false, // Important pour Vercel
+            autoConnect: true,
             withCredentials: true
         });
 
@@ -55,10 +55,7 @@ export const useSocket = (roomCode: string, onStateUpdate: SocketCallback) => {
 
         socket.on('connect_error', (error) => {
             console.error('❌ Erreur de connexion:', error);
-            if (socket.io.opts.transports[0] === 'websocket') {
-                console.log('🔄 Tentative de reconnexion en polling...');
-                socket.io.opts.transports = ['polling', 'websocket'];
-            }
+            handleReconnect();
         });
 
         socket.on('disconnect', (reason) => {
@@ -66,12 +63,11 @@ export const useSocket = (roomCode: string, onStateUpdate: SocketCallback) => {
             handleReconnect();
         });
 
-        socket.connect();
     }, [roomCode, onStateUpdate]);
 
     const handleReconnect = useCallback(() => {
-        if (reconnectAttemptsRef.current >= 10) {
-            console.error('🚫 Nombre maximum de tentatives de reconnexion atteint');
+        if (reconnectAttemptsRef.current >= 5) {
+            console.error('🚫 Nombre maximum de tentatives atteint');
             return;
         }
 
@@ -79,18 +75,15 @@ export const useSocket = (roomCode: string, onStateUpdate: SocketCallback) => {
             clearTimeout(reconnectTimeoutRef.current);
         }
 
-        const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 10000);
-
         reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;
-            console.log(`🔄 Tentative de reconnexion ${reconnectAttemptsRef.current}/10`);
+            console.log(`🔄 Tentative de reconnexion ${reconnectAttemptsRef.current}/5`);
             connect();
-        }, delay);
+        }, 1000);
     }, [connect]);
 
     useEffect(() => {
         connect();
-
         return () => {
             if (reconnectTimeoutRef.current) {
                 clearTimeout(reconnectTimeoutRef.current);
@@ -104,19 +97,12 @@ export const useSocket = (roomCode: string, onStateUpdate: SocketCallback) => {
 
     const emitStateUpdate = useCallback((newState: GameState) => {
         if (!socketRef.current?.connected) {
-            console.warn('⚠️ Socket non connecté, tentative de reconnexion...');
-            connect();
+            console.warn('⚠️ Socket non connecté');
             return;
         }
-
-        try {
-            console.log('📤 Émission mise à jour:', newState);
-            socketRef.current.emit('updateState', roomCode, newState);
-        } catch (error) {
-            console.error('❌ Erreur lors de l\'émission:', error);
-            handleReconnect();
-        }
-    }, [roomCode, connect, handleReconnect]);
+        console.log('📤 Émission mise à jour:', newState);
+        socketRef.current.emit('updateState', roomCode, newState);
+    }, [roomCode]);
 
     return { emitStateUpdate };
 };
