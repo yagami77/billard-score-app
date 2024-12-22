@@ -4,21 +4,13 @@ import { GameState } from '../types/types';
 
 const getSocketUrl = () => {
     if (typeof window !== 'undefined') {
-        const protocol = window.location.protocol === 'https:' ? 'https://' : 'http://';
-        const hostname = window.location.hostname;
-
-        // En production (5quilles.com)
-        if (hostname === '5quilles.com' || hostname === 'www.5quilles.com') {
-            return `${protocol}${hostname}`;
-        }
-
-        // Pour Vercel Preview
-        if (hostname.includes('vercel.app')) {
-            return `${protocol}${hostname}`;
-        }
-
         // En développement
-        return 'http://localhost:3001';
+        if (window.location.hostname === 'localhost') {
+            return 'http://localhost:3001';
+        }
+
+        // En production (incluant Vercel et 5quilles.com)
+        return window.location.origin;
     }
     return 'http://localhost:3001';
 };
@@ -37,14 +29,13 @@ export const useSocket = (roomCode: string, onStateUpdate: SocketCallback) => {
         console.log('🔌 Tentative de connexion à:', socketUrl);
 
         socketRef.current = io(socketUrl, {
-            path: '/api/ws/socket.io',
-            transports: ['polling', 'websocket'],  // Polling en premier
+            path: '/api/ws',  // Simplifié
+            transports: ['polling', 'websocket'],  // Polling d'abord
             reconnection: true,
-            reconnectionAttempts: 10,
+            reconnectionAttempts: 5,
             reconnectionDelay: 1000,
-            timeout: 10000,
+            timeout: 5000,
             forceNew: true,
-            autoConnect: true,
             rejectUnauthorized: false, // Important pour Vercel
             withCredentials: true
         });

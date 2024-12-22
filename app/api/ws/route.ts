@@ -4,13 +4,9 @@ import { NextRequest } from 'next/server';
 
 const httpServer = createServer();
 const io = new Server(httpServer, {
-    path: '/api/ws/socket.io',  // Ajout du path correct
+    path: '/api/ws',  // Ajout du path correct
     cors: {
-        origin: [
-            "http://localhost:3000",
-            "https://www.5quilles.com",
-            "https://billard-score-app-git-stable1-rahmani-alaes-projects.vercel.app"
-        ],
+        origin: '*',
         methods: ["GET", "POST"],
         credentials: true
     }
