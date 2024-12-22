@@ -1,108 +1,71 @@
-import { createServer } from 'http';
-import { Server } from 'socket.io';
-import { NextRequest } from 'next/server';
+const getSocketUrl = () => {
+    if (typeof window !== 'undefined') {
+        // En développement local
+        if (window.location.hostname === 'localhost') {
+            return 'http://localhost:3001';
+        }
 
-const httpServer = createServer();
-const io = new Server(httpServer, {
-    path: '/api/ws',
-    cors: {
-        origin: ['http://localhost:3000', 'https://www.5quilles.com'],
-        methods: ['GET', 'POST'],
-        credentials: true
+        // En production, utiliser le domaine actuel
+        return window.location.origin;
     }
-});
+    return 'http://localhost:3001';
+};
 
-// Stockage des états des tables et des connexions dashboard
-const tableStates = new Map();
-const dashboardSockets = new Set();
+export const useSocket = (roomCode: string, onStateUpdate: SocketCallback) => {
+    const socketRef = useRef<Socket | null>(null);
 
-io.on('connection', (socket) => {
-    console.log('Nouvelle connexion socket:', socket.id);
-    let currentRoom: string | null = null;
-    let isDashboard = false;
+    const connect = useCallback(() => {
+        if (socketRef.current?.connected) return;
 
-    // Gestion connexion dashboard
-    socket.on('joinDashboard', () => {
-        console.log('Client rejoint le dashboard:', socket.id);
-        isDashboard = true;
-        dashboardSockets.add(socket);
-        // Envoyer l'état actuel de toutes les tables
-        const currentGames = Array.from(tableStates.entries()).map(([roomCode, gameState]) => ({
-            roomCode,
-            gameState,
-            lastUpdate: new Date()
-        }));
-        socket.emit('dashboardUpdate', currentGames);
-    });
+        const socketUrl = getSocketUrl();
+        console.log('🔌 Tentative de connexion à:', socketUrl);
 
-    // Gestion connexion table
-    socket.on('joinRoom', (roomCode) => {
-        console.log(`Client ${socket.id} rejoint la table: ${roomCode}`);
-
-        if (currentRoom) {
-            socket.leave(currentRoom);
-        }
-        socket.join(roomCode);
-        currentRoom = roomCode;
-
-        if (tableStates.has(roomCode)) {
-            socket.emit('stateUpdate', tableStates.get(roomCode));
-        }
-    });
-
-    // Mise à jour état
-    socket.on('updateState', (roomCode, newState) => {
-        console.log(`Mise à jour de l'état pour ${roomCode}:`, newState);
-        tableStates.set(roomCode, newState);
-
-        // Diffuser aux clients de la table
-        socket.to(roomCode).emit('stateUpdate', newState);
-
-        // Diffuser aux dashboards
-        const update = {
-            roomCode,
-            gameState: newState,
-            lastUpdate: new Date()
-        };
-        dashboardSockets.forEach(dashSocket => {
-            dashSocket.emit('gameUpdate', update);
+        socketRef.current = io(socketUrl, {
+            path: '/api/ws/socket.io',
+            transports: ['polling'],  // Uniquement polling pour le moment
+            reconnectionAttempts: 3,
+            reconnectionDelay: 2000,
+            timeout: 10000,
+            autoConnect: true
         });
-    });
 
-    // Gestion des erreurs
-    socket.on('error', (error) => {
-        console.error('Erreur socket:', error);
-    });
+        const socket = socketRef.current;
 
-    // Déconnexion
-    socket.on('disconnect', () => {
-        console.log(`Client déconnecté: ${socket.id}`);
-        if (isDashboard) {
-            dashboardSockets.delete(socket);
-        } else if (currentRoom) {
-            // Si toutes les connexions d'une table sont fermées, retirer la table
-            const room = io.sockets.adapter.rooms.get(currentRoom);
-            if (!room || room.size === 0) {
-                tableStates.delete(currentRoom);
-                // Informer les dashboards
-                dashboardSockets.forEach(dashSocket => {
-                    dashSocket.emit('gameEnded', currentRoom);
-                });
+        socket.on('connect', () => {
+            console.log('✅ Connecté au serveur');
+            socket.emit('joinRoom', roomCode);
+        });
+
+        socket.on('stateUpdate', (newState: GameState) => {
+            console.log('📥 Mise à jour reçue:', newState);
+            onStateUpdate(newState);
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('❌ Erreur de connexion:', error);
+        });
+
+        socket.io.on("error", (error) => {
+            console.error('🚨 Erreur IO:', error);
+        });
+
+        socket.connect();
+    }, [roomCode, onStateUpdate]);
+
+    useEffect(() => {
+        connect();
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+                socketRef.current = null;
             }
-        }
-    });
-});
+        };
+    }, [connect]);
 
-export async function GET(request: NextRequest) {
-    if (request.headers.get('upgrade') !== 'websocket') {
-        return new Response('Requires WebSocket connection', { status: 426 });
-    }
+    const emitStateUpdate = useCallback((newState: GameState) => {
+        if (!socketRef.current?.connected) return;
+        socketRef.current.emit('updateState', roomCode, newState);
+    }, [roomCode]);
 
-    const PORT = process.env.PORT || 3001;
-    httpServer.listen(PORT, () => {
-        console.log(`🚀 Serveur WebSocket démarré sur le port ${PORT}`);
-        console.log('👌 CORS configuré pour:', io.origins());
-    });
-
-    return new Response('WebSocket server is running');
-}
+    return { emitStateUpdate };
+};
