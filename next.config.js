@@ -5,7 +5,12 @@ const nextConfig = {
     },
     eslint: {
         ignoreDuringBuilds: true,  // Ignore les erreurs ESLint
+    },
+    experimental: {
+        optimizeCss: true,
+        externalDir: true,
+        workerThreads: true
     }
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
