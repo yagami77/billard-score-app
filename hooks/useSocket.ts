@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { GameState } from '../types/types';
+import { useCallback } from 'react';
 
 type SocketCallback = (state: GameState) => void;
 
@@ -46,14 +47,14 @@ export const useSocket = (roomCode: string, onStateUpdate: SocketCallback) => {
     }, [roomCode]);
 
     // Fonction pour émettre des mises à jour d'état
-    const emitStateUpdate = (newState: GameState) => {
+    const emitStateUpdate = useCallback((newState: GameState) => {
         if (socketRef.current?.connected) {
             console.log('Emitting state update:', newState);
             socketRef.current.emit('updateState', roomCode, newState);
         } else {
             console.warn('Cannot emit state update: socket not connected');
         }
-    };
+    }, [roomCode]);
 
     return { emitStateUpdate };
 };

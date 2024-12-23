@@ -58,7 +58,7 @@ const BillardScore = () => {
         if (!showConfigDialog) {
             emitStateUpdate(gameState);
         }
-    }, [scores, setsGagnes, nomJoueurs, activePlayer, configPartie, gagnant, showConfigDialog]);
+    }, [scores, setsGagnes, nomJoueurs, activePlayer, configPartie, gagnant, showConfigDialog, emitStateUpdate]);
 
     const handleConfigChange = (key, value) => {
         setTempConfig(prev => ({ ...prev, [key]: value }));

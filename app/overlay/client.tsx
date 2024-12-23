@@ -5,7 +5,6 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSocket } from '../../hooks/useSocket';
 import { GameState } from '../../types/types';
-import { Crown } from 'lucide-react';
 
 export default function OverlayClient() {
     const searchParams = useSearchParams();
