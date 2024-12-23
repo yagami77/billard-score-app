@@ -5,9 +5,6 @@ const nextConfig = {
     },
     eslint: {
         ignoreDuringBuilds: true,  // Ignore les erreurs ESLint
-    },
-    experimental: {
-        missingSuspenseWithCSRBailout: false  // Désactive l'avertissement pour useSearchParams
     }
 }
 
