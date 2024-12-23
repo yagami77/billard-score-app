@@ -6,7 +6,7 @@
     "heroku-postbuild": "npm run build",
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node server.js",
     "lint": "next lint",
     "socket": "node server.js",
     "dev:all": "concurrently \"npm run dev\" \"npm run socket\""
