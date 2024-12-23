@@ -34,7 +34,7 @@ export const useSocket = (roomCode: string, onStateUpdate: SocketCallback) => {
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
-            timeout: 5000,
+            timeout: 10000,
             forceNew: true,
             autoConnect: true,
             withCredentials: true
