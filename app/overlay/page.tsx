@@ -5,26 +5,23 @@ import { useSearchParams } from 'next/navigation';
 import { useSocket } from '../../hooks/useSocket';
 import { GameState } from '../../types/types';
 import { Crown } from 'lucide-react';
+
 export const dynamic = 'force-dynamic';
-export default function OverlayPage() {
-    const searchParams = useSearchParams();
-    const roomCode = searchParams.get('table') || 'default';
+
+function OverlayContent({ roomCode }: { roomCode: string }) {
     const [gameState, setGameState] = useState<GameState | null>(null);
 
-
-    // Utilisation du hook WebSocket avec des logs de debug
     useSocket(roomCode, (newState) => {
-        console.log('Overlay received state:', newState);
+        console.log('[OverlayContent] WebSocket State Update:', newState);
         setGameState(newState);
     });
 
-    // Log pour voir si le composant se monte correctement
     useEffect(() => {
-        console.log('Overlay mounted with roomCode:', roomCode);
+        console.log('[OverlayContent] Mounted with roomCode:', roomCode);
     }, [roomCode]);
 
-    // Affichage du message d'attente avec plus d'informations
     if (!gameState) {
+        console.log('[OverlayContent] No gameState available.');
         return (
             <div className="p-4 text-white bg-black/50 rounded">
                 <div>En attente de connexion à la table {roomCode}...</div>
@@ -35,30 +32,41 @@ export default function OverlayPage() {
         );
     }
 
+    console.log('[OverlayContent] Current gameState:', gameState);
+
     return (
-        <Suspense fallback={<div>Chargement des paramètres...</div>}>
-            <main className="h-screen w-screen bg-transparent p-4">
-                <div className="inline-block">
-                    <table className="border-collapse border border-black">
-                        <tbody>
-                        {/* Joueur 1 */}
-                        <PlayerRow
-                            joueur={gameState.nomJoueurs.joueur1}
-                            score={gameState.scores.joueur1}
-                            sets={gameState.setsGagnes.joueur1}
-                            isWinner={gameState.gagnant === 'joueur1'}
-                        />
-                        {/* Joueur 2 */}
-                        <PlayerRow
-                            joueur={gameState.nomJoueurs.joueur2}
-                            score={gameState.scores.joueur2}
-                            sets={gameState.setsGagnes.joueur2}
-                            isWinner={gameState.gagnant === 'joueur2'}
-                        />
-                        </tbody>
-                    </table>
-                </div>
-            </main>
+        <main className="h-screen w-screen bg-transparent p-4">
+            <div className="inline-block">
+                <table className="border-collapse border border-black">
+                    <tbody>
+                    <PlayerRow
+                        joueur={gameState.nomJoueurs.joueur1}
+                        score={gameState.scores.joueur1}
+                        sets={gameState.setsGagnes.joueur1}
+                        isWinner={gameState.gagnant === 'joueur1'}
+                    />
+                    <PlayerRow
+                        joueur={gameState.nomJoueurs.joueur2}
+                        score={gameState.scores.joueur2}
+                        sets={gameState.setsGagnes.joueur2}
+                        isWinner={gameState.gagnant === 'joueur2'}
+                    />
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    );
+}
+
+export default function OverlayPage() {
+    const searchParams = useSearchParams();
+    const roomCode = searchParams.get('table') || 'default';
+
+    console.log('[OverlayPage] Current roomCode:', roomCode);
+
+    return (
+        <Suspense fallback={<div>Chargement en cours...</div>}>
+            <OverlayContent roomCode={roomCode} />
         </Suspense>
     );
 }
@@ -67,13 +75,15 @@ function PlayerRow({
                        joueur,
                        score,
                        sets,
-                       isWinner
+                       isWinner,
                    }: {
     joueur: string;
     score: number;
     sets: number;
     isWinner: boolean;
 }) {
+    console.log('[PlayerRow] Rendering PlayerRow:', { joueur, score, sets, isWinner });
+
     return (
         <tr className="h-[35px]">
             <td className="bg-gray-50 min-w-[150px] border border-black px-3 whitespace-nowrap overflow-hidden">
