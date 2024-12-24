@@ -39,19 +39,13 @@ function OverlayContent({ roomCode }: { roomCode: string }) {
     );
 }
 
-function RoomCodeProvider({ children }: { children: (roomCode: string) => React.ReactNode }) {
+export default function OverlayClient() {
     const searchParams = useSearchParams();
     const roomCode = searchParams.get('table') || 'default';
 
-    return <>{children(roomCode)}</>;
-}
-
-export default function OverlayClient() {
     return (
         <Suspense fallback={<div>Chargement en cours...</div>}>
-            <RoomCodeProvider>
-                {(roomCode: string) => <OverlayContent roomCode={roomCode} />}
-            </RoomCodeProvider>
+            <OverlayContent roomCode={roomCode} />
         </Suspense>
     );
 }

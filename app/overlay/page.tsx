@@ -5,11 +5,12 @@ import { useSearchParams } from 'next/navigation';
 import { useSocket } from '../../hooks/useSocket';
 import { GameState } from '../../types/types';
 import { Crown } from 'lucide-react';
-
+export const dynamic = 'force-dynamic';
 export default function OverlayPage() {
     const searchParams = useSearchParams();
     const roomCode = searchParams.get('table') || 'default';
     const [gameState, setGameState] = useState<GameState | null>(null);
+
 
     // Utilisation du hook WebSocket avec des logs de debug
     useSocket(roomCode, (newState) => {
