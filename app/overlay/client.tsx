@@ -1,7 +1,6 @@
 'use client';
 
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSocket } from '../../hooks/useSocket';
 import { GameState } from '../../types/types';
@@ -32,13 +31,15 @@ export default function OverlayClient() {
     }
 
     return (
-        <main className="h-screen w-screen bg-transparent p-4">
-            {/* Tout votre JSX existant */}
-            <div className="inline-block">
-                <table className="border-collapse border border-black">
-                    {/* ... reste du code ... */}
-                </table>
-            </div>
-        </main>
+        <Suspense fallback={<div>Chargement de l'overlay...</div>}>
+            <main className="h-screen w-screen bg-transparent p-4">
+                {/* Tout votre JSX existant */}
+                <div className="inline-block">
+                    <table className="border-collapse border border-black">
+                        {/* ... reste du code ... */}
+                    </table>
+                </div>
+            </main>
+        </Suspense>
     );
 }
