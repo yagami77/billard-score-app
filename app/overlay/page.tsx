@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useState, useEffect, Suspense} from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSocket } from '../../hooks/useSocket';
 import { GameState } from '../../types/types';
@@ -12,7 +12,7 @@ export default function OverlayPage() {
     const [gameState, setGameState] = useState<GameState | null>(null);
 
     // Utilisation du hook WebSocket avec des logs de debug
-    const {} = useSocket(roomCode, (newState) => {
+    useSocket(roomCode, (newState) => {
         console.log('Overlay received state:', newState);
         setGameState(newState);
     });
@@ -35,72 +35,67 @@ export default function OverlayPage() {
     }
 
     return (
-        <Suspense>
+        <Suspense fallback={<div>Chargement des paramètres...</div>}>
             <main className="h-screen w-screen bg-transparent p-4">
-            <div className="inline-block">
-                <table className="border-collapse border border-black">
-                    <tbody>
-                    {/* Joueur 1 */}
-                    <tr className="h-[35px]">
-                        <td className="bg-gray-50 min-w-[150px] border border-black px-3 whitespace-nowrap overflow-hidden">
-                                <span className="text-gray-900 font-semibold text-base truncate block">
-                                    {gameState.nomJoueurs.joueur1}
-                                </span>
-                        </td>
-                        <td className="bg-red-600 w-[45px] border border-black">
-                            <div className="flex items-center justify-start pl-2">
-                                <div className="w-3 h-3 rounded-full bg-white mr-1"></div>
-                                <span className="text-white font-bold text-base tabular-nums">
-                                        {gameState.setsGagnes.joueur1}
-                                    </span>
-                            </div>
-                        </td>
-                        <td className="bg-red-600 w-[45px] border border-black relative">
-                            <div className="flex items-center justify-center">
-                                    <span className="text-white font-bold text-base tabular-nums">
-                                        {gameState.scores.joueur1}
-                                    </span>
-                            </div>
-                            {gameState.gagnant === 'joueur1' && (
-                                <div className="absolute -right-8 top-1/2 -translate-y-1/2">
-                                    <Crown className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                                </div>
-                            )}
-                        </td>
-                    </tr>
-
-                    {/* Joueur 2 */}
-                    <tr className="h-[35px]">
-                        <td className="bg-gray-50 min-w-[150px] border border-black px-3 whitespace-nowrap overflow-hidden">
-                                <span className="text-gray-900 font-semibold text-base truncate block">
-                                    {gameState.nomJoueurs.joueur2}
-                                </span>
-                        </td>
-                        <td className="bg-red-600 w-[45px] border border-black">
-                            <div className="flex items-center justify-start pl-2">
-                                <div className="w-3 h-3 rounded-full bg-yellow-300 mr-1"></div>
-                                <span className="text-white font-bold text-base tabular-nums">
-                                        {gameState.setsGagnes.joueur2}
-                                    </span>
-                            </div>
-                        </td>
-                        <td className="bg-red-600 w-[45px] border border-black relative">
-                            <div className="flex items-center justify-center">
-                                    <span className="text-white font-bold text-base tabular-nums">
-                                        {gameState.scores.joueur2}
-                                    </span>
-                            </div>
-                            {gameState.gagnant === 'joueur2' && (
-                                <div className="absolute -right-8 top-1/2 -translate-y-1/2">
-                                    <Crown className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                                </div>
-                            )}
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </main>
+                <div className="inline-block">
+                    <table className="border-collapse border border-black">
+                        <tbody>
+                        {/* Joueur 1 */}
+                        <PlayerRow
+                            joueur={gameState.nomJoueurs.joueur1}
+                            score={gameState.scores.joueur1}
+                            sets={gameState.setsGagnes.joueur1}
+                            isWinner={gameState.gagnant === 'joueur1'}
+                        />
+                        {/* Joueur 2 */}
+                        <PlayerRow
+                            joueur={gameState.nomJoueurs.joueur2}
+                            score={gameState.scores.joueur2}
+                            sets={gameState.setsGagnes.joueur2}
+                            isWinner={gameState.gagnant === 'joueur2'}
+                        />
+                        </tbody>
+                    </table>
+                </div>
+            </main>
         </Suspense>
+    );
+}
+
+function PlayerRow({
+                       joueur,
+                       score,
+                       sets,
+                       isWinner
+                   }: {
+    joueur: string;
+    score: number;
+    sets: number;
+    isWinner: boolean;
+}) {
+    return (
+        <tr className="h-[35px]">
+            <td className="bg-gray-50 min-w-[150px] border border-black px-3 whitespace-nowrap overflow-hidden">
+                <span className="text-gray-900 font-semibold text-base truncate block">
+                    {joueur}
+                </span>
+            </td>
+            <td className="bg-red-600 w-[45px] border border-black">
+                <div className="flex items-center justify-start pl-2">
+                    <div className="w-3 h-3 rounded-full bg-white mr-1"></div>
+                    <span className="text-white font-bold text-base tabular-nums">{sets}</span>
+                </div>
+            </td>
+            <td className="bg-red-600 w-[45px] border border-black relative">
+                <div className="flex items-center justify-center">
+                    <span className="text-white font-bold text-base tabular-nums">{score}</span>
+                </div>
+                {isWinner && (
+                    <div className="absolute -right-8 top-1/2 -translate-y-1/2">
+                        <Crown className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                    </div>
+                )}
+            </td>
+        </tr>
     );
 }
