@@ -5,12 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import { useSocket } from '../../hooks/useSocket';
 import { GameState } from '../../types/types';
 
-export default function OverlayClient() {
-    const searchParams = useSearchParams();
-    const roomCode = searchParams.get('table') || 'default';
+function OverlayContent({ roomCode }: { roomCode: string }) {
     const [gameState, setGameState] = useState<GameState | null>(null);
 
-    const {} = useSocket(roomCode, (newState) => {
+    useSocket(roomCode, (newState) => {
         console.log('Overlay received state:', newState);
         setGameState(newState);
     });
@@ -31,15 +29,23 @@ export default function OverlayClient() {
     }
 
     return (
-        <Suspense fallback={<div>Chargement de l'overlay...</div>}>
-            <main className="h-screen w-screen bg-transparent p-4">
-                {/* Tout votre JSX existant */}
-                <div className="inline-block">
-                    <table className="border-collapse border border-black">
-                        {/* ... reste du code ... */}
-                    </table>
-                </div>
-            </main>
+        <main className="h-screen w-screen bg-transparent p-4">
+            <div className="inline-block">
+                <table className="border-collapse border border-black">
+                    {/* Insérez ici votre logique d'affichage */}
+                </table>
+            </div>
+        </main>
+    );
+}
+
+export default function OverlayClient() {
+    const searchParams = useSearchParams();
+    const roomCode = searchParams.get('table') || 'default';
+
+    return (
+        <Suspense fallback={<div>Chargement en cours...</div>}>
+            <OverlayContent roomCode={roomCode} />
         </Suspense>
     );
 }
