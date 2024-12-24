@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, Suspense} from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSocket } from '../../hooks/useSocket';
 import { GameState } from '../../types/types';
@@ -35,7 +35,8 @@ export default function OverlayPage() {
     }
 
     return (
-        <main className="h-screen w-screen bg-transparent p-4">
+        <Suspense>
+            <main className="h-screen w-screen bg-transparent p-4">
             <div className="inline-block">
                 <table className="border-collapse border border-black">
                     <tbody>
@@ -100,5 +101,6 @@ export default function OverlayPage() {
                 </table>
             </div>
         </main>
+        </Suspense>
     );
 }
