@@ -1,12 +1,11 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSocket } from '../../hooks/useSocket';
 import { GameState } from '../../types/types';
 import { Crown } from 'lucide-react';
-
-export const dynamic = 'force-dynamic';
 
 function OverlayContent({ roomCode }: { roomCode: string }) {
     const [gameState, setGameState] = useState<GameState | null>(null);
@@ -110,3 +109,4 @@ function PlayerRow({
         </tr>
     );
 }
+
