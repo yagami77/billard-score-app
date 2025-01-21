@@ -1,14 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import OverlayClient from './client';
 
-export default function OverlayPage() {
-    console.log('[OverlayPage] Rendered');
-
+export default function Page() {
     return (
-        <div>
+        <Suspense fallback={<div>Chargement en cours...</div>}>
             <OverlayClient />
-        </div>
+        </Suspense>
     );
 }
