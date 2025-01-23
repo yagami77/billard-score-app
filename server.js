@@ -1,7 +1,12 @@
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
-const httpServer = createServer();
+const httpServer = createServer((req, res) => {
+    if (req.headers['x-forwarded-proto'] !== 'https') {
+        res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });
+        res.end();
+    }
+});
 
 // Configuration CORS dynamique basée sur l'environnement
 const allowedOrigins = [
