@@ -1,8 +1,9 @@
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
+// Création du serveur HTTP avec redirection HTTPS
 const httpServer = createServer((req, res) => {
-    if (req.headers['x-forwarded-proto'] !== 'https') {
+    if (req.headers['x-forwarded-proto'] !== 'https' && process.env.NODE_ENV === 'production') {
         res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });
         res.end();
     }
@@ -10,11 +11,10 @@ const httpServer = createServer((req, res) => {
 
 // Configuration CORS dynamique basée sur l'environnement
 const allowedOrigins = [
-    'http://localhost:3000',          // Développement local
-    'https://www.5quilles.com',       // Production
-    'https://5quilles.com',           // Production sans www
-    process.env.NEXT_PUBLIC_ORIGIN_URL // URL depuis les variables d'environnement
-].filter(Boolean); // Enlève les valeurs null/undefined
+    process.env.NODE_ENV === 'production' ? 'https://www.5quilles.com' : 'http://localhost:3000', // Origines selon l'environnement
+    process.env.NODE_ENV === 'production' ? 'https://5quilles.com' : null, // Origine sans www (prod uniquement)
+    process.env.NEXT_PUBLIC_ORIGIN_URL // URL configurable via les variables d'environnement
+].filter(Boolean); // Supprime les valeurs null/undefined
 
 const io = new Server(httpServer, {
     cors: {
