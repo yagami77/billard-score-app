@@ -1,29 +1,33 @@
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
-// Création du serveur HTTP avec redirection HTTPS
 const httpServer = createServer((req, res) => {
-    if (req.headers['x-forwarded-proto'] !== 'https' && process.env.NODE_ENV === 'production') {
-        res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });
+    // Redirection vers HTTPS et www.5quilles.com
+    const host = req.headers.host || '';
+    const targetHost = 'www.5quilles.com';
+    if (host !== targetHost || req.headers['x-forwarded-proto'] !== 'https') {
+        const newLocation = `https://${targetHost}${req.url}`;
+        res.writeHead(301, { Location: newLocation });
         res.end();
+        return;
     }
 });
 
-// Configuration CORS dynamique basée sur l'environnement
+// Configuration des origines autorisées
 const allowedOrigins = [
-    process.env.NODE_ENV === 'production' ? 'https://www.5quilles.com' : 'http://localhost:3000', // Origines selon l'environnement
-    process.env.NODE_ENV === 'production' ? 'https://5quilles.com' : null, // Origine sans www (prod uniquement)
-    process.env.NEXT_PUBLIC_ORIGIN_URL // URL configurable via les variables d'environnement
-].filter(Boolean); // Supprime les valeurs null/undefined
+    'https://www.5quilles.com',  // Domaine principal
+    process.env.NEXT_PUBLIC_ORIGIN_URL // Variable d'environnement (production)
+].filter(Boolean); // Filtrer les valeurs nulles ou indéfinies
 
+// Configurer Socket.IO
 const io = new Server(httpServer, {
     cors: {
         origin: allowedOrigins,
-        methods: ["GET", "POST"],
+        methods: ['GET', 'POST'],
         credentials: true
     },
-    allowEIO3: true, // Support pour la version Engine.IO 3
-    transports: ['websocket', 'polling'] // Permet le fallback en polling si WebSocket échoue
+    allowEIO3: true, // Support pour Engine.IO 3
+    transports: ['websocket', 'polling'] // Fallback en polling si WebSocket échoue
 });
 
 // Stockage des états des tables et des connexions dashboard
@@ -32,15 +36,17 @@ const dashboardSockets = new Set();
 
 io.on('connection', (socket) => {
     console.log('New client connected from:', socket.handshake.headers.origin);
+
     let currentRoom = null;
     let isDashboard = false;
 
-    // Gestion connexion dashboard
+    // Gestion des connexions dashboard
     socket.on('joinDashboard', () => {
         console.log('Client joining dashboard');
         isDashboard = true;
         dashboardSockets.add(socket);
-        // Envoyer l'état actuel de toutes les tables
+
+        // Envoyer l'état actuel de toutes les tables au dashboard
         const currentGames = Array.from(tableStates.entries()).map(([roomCode, gameState]) => ({
             roomCode,
             gameState,
@@ -49,7 +55,7 @@ io.on('connection', (socket) => {
         socket.emit('dashboardUpdate', currentGames);
     });
 
-    // Gestion connexion table
+    // Gestion des connexions à une table spécifique
     socket.on('joinRoom', (roomCode) => {
         console.log(`Client joining room: ${roomCode}`);
 
@@ -59,12 +65,13 @@ io.on('connection', (socket) => {
         socket.join(roomCode);
         currentRoom = roomCode;
 
+        // Envoyer l'état actuel de la table si disponible
         if (tableStates.has(roomCode)) {
             socket.emit('stateUpdate', tableStates.get(roomCode));
         }
     });
 
-    // Mise à jour état
+    // Mise à jour de l'état d'une table
     socket.on('updateState', (roomCode, newState) => {
         console.log(`State update for room ${roomCode}:`, newState);
         tableStates.set(roomCode, newState);
@@ -83,18 +90,12 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Gestion des erreurs socket
-    socket.on('error', (error) => {
-        console.error('Socket error:', error);
-    });
-
-    // Déconnexion
+    // Gestion des déconnexions
     socket.on('disconnect', () => {
         console.log('Client disconnected');
         if (isDashboard) {
             dashboardSockets.delete(socket);
         } else if (currentRoom) {
-            // Si toutes les connexions d'une table sont fermées, retirer la table
             const room = io.sockets.adapter.rooms.get(currentRoom);
             if (!room || room.size === 0) {
                 tableStates.delete(currentRoom);
@@ -105,6 +106,11 @@ io.on('connection', (socket) => {
             }
         }
     });
+
+    // Gestion des erreurs
+    socket.on('error', (error) => {
+        console.error('Socket error:', error);
+    });
 });
 
 // Gestion des erreurs serveur
@@ -112,8 +118,8 @@ httpServer.on('error', (error) => {
     console.error('Server error:', error);
 });
 
-// Configuration du port dynamique
-const PORT = process.env.PORT || 3001;
+// Configuration du port
+const PORT = process.env.PORT || 8080;
 httpServer.listen(PORT, () => {
     console.log(`WebSocket server running on port ${PORT}`);
     console.log('Allowed origins:', allowedOrigins);
