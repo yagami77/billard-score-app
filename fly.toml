@@ -1,0 +1,40 @@
+app = "billard-score-app" # Remplacez si votre app Fly.io porte un autre nom
+primary_region = "ewr" # Remplacez par la région de déploiement (fra pour Paris, ewr pour Newark, etc.)
+
+[build]
+  builder = "paketobuildpacks/builder:base" # Builder pour les applications Node.js/React
+
+[env]
+  PORT = "8080"
+  NODE_ENV = "production"
+  MODE = "prod"
+  NEXT_PUBLIC_WEBSOCKET_URL = "wss://www.5quilles.com/api/ws"
+  NEXT_PUBLIC_ORIGIN_URL = "https://www.5quilles.com"
+  PROD_WEBSOCKET_URL = "wss://www.5quilles.com/api/ws"
+  PROD_ORIGIN_URL = "https://www.5quilles.com"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_https = {certificates = ["www.5quilles.com"]}
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  ports = [{ port = 80 }, { port = 443 }]
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 100
+    soft_limit = 50
+
+  [[services.http_checks]]
+    path = "/"
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "5s"
+    method = "get"
+
+  [[services.tcp_checks]]
+    interval = "15s"
+    timeout = "2s"
