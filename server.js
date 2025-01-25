@@ -1,26 +1,33 @@
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
-
+// Création du serveur HTTP avec redirection vers HTTPS et www.5quilles.com
 const httpServer = createServer((req, res) => {
-    // Redirection vers HTTPS et www.5quilles.com
     const host = req.headers.host || '';
     const targetHost = 'www.5quilles.com';
-    if (host !== targetHost || req.headers['x-forwarded-proto'] !== 'https') {
+    const isHttps = req.headers['x-forwarded-proto'] === 'https';
+
+    // Rediriger si l'hôte n'est pas "www.5quilles.com" ou si la connexion n'est pas HTTPS
+    if (host !== targetHost || !isHttps) {
         const newLocation = `https://${targetHost}${req.url}`;
+        console.log(`Redirection: ${req.url} -> ${newLocation}`);
         res.writeHead(301, { Location: newLocation });
         res.end();
         return;
     }
+
+    // Réponse par défaut (si aucune redirection n'est nécessaire)
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('WebSocket Server is Running');
 });
 
 // Configuration des origines autorisées
 const allowedOrigins = [
     'https://www.5quilles.com',  // Domaine principal
     process.env.NEXT_PUBLIC_ORIGIN_URL // Variable d'environnement (production)
-].filter(Boolean); // Filtrer les valeurs nulles ou indéfinies
+].filter(Boolean);
 
-// Configurer Socket.IO
+// Configurer Socket.IO avec CORS
 const io = new Server(httpServer, {
     cors: {
         origin: allowedOrigins,
