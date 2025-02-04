@@ -24,6 +24,7 @@ const httpServer = createServer((req, res) => {
 // Configuration des origines autorisées
 const allowedOrigins = [
     'https://www.5quilles.com',  // Domaine principal
+    'http://localhost:3000',
     process.env.NEXT_PUBLIC_ORIGIN_URL // Variable d'environnement (production)
 ].filter(Boolean);
 
