@@ -1,27 +1,36 @@
-app = "billard-score-app" # Remplacez si votre app Fly.io porte un autre nom
-primary_region = "ewr" # Remplacez par la région de déploiement (fra pour Paris, ewr pour Newark, etc.)
+app = "billard-score-app"
+primary_region = "fra"
 
 [build]
-  builder = "paketobuildpacks/builder:base" # Builder pour les applications Node.js/React
+  builder = "paketobuildpacks/builder:base"
 
 [env]
   PORT = "8080"
   NODE_ENV = "production"
-  MODE = "prod"
   NEXT_PUBLIC_WEBSOCKET_URL = "wss://www.5quilles.com/api/ws"
   NEXT_PUBLIC_ORIGIN_URL = "https://www.5quilles.com"
-  PROD_WEBSOCKET_URL = "wss://www.5quilles.com/api/ws"
-  PROD_ORIGIN_URL = "https://www.5quilles.com"
+  WEBSOCKET_URL = "wss://www.5quilles.com/api/ws"
+  ORIGIN_URL = "https://www.5quilles.com"
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_https = {certificates = ["www.5quilles.com"]}
+  auto_https = { enabled = true }
 
 [[services]]
   protocol = "tcp"
   internal_port = 8080
-  ports = [{ port = 80 }, { port = 443 }]
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
 
   [services.concurrency]
     type = "connections"
@@ -29,11 +38,12 @@ primary_region = "ewr" # Remplacez par la région de déploiement (fra pour Pari
     soft_limit = 50
 
   [[services.http_checks]]
-    path = "/"
     interval = "15s"
     timeout = "2s"
     grace_period = "5s"
     method = "get"
+    path = "/"
+    protocol = "http"
 
   [[services.tcp_checks]]
     interval = "15s"

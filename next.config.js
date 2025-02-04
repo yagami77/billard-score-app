@@ -6,6 +6,9 @@ const nextConfig = {
     eslint: {
         ignoreDuringBuilds: true,  // Ignore les erreurs ESLint
     },
+    trailingSlash: true, // Ajoute un slash à la fin des URLs pour éviter les erreurs de routage
+    output: 'standalone', // Permet de déployer sans dépendances inutiles
+    reactStrictMode: false, // Désactive les warnings de Next.js
     images: {
         domains: [
             'localhost',          // Localhost pour le développement
@@ -21,17 +24,6 @@ const nextConfig = {
                     {
                         type: 'host',
                         value: '5quilles.com'
-                    }
-                ],
-                permanent: true,
-                destination: 'https://www.5quilles.com/:1'
-            },
-            {
-                source: '/(.*)',
-                has: [
-                    {
-                        type: 'host',
-                        value: 'http://www.5quilles.com'
                     }
                 ],
                 permanent: true,
