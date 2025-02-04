@@ -3,9 +3,10 @@ primary_region = "fra"
 
 [build]
   builder = "paketobuildpacks/builder:base"
-  [build.args]
-      NODE_VERSION = "18.18.0"
   buildpacks = ["paketo-buildpacks/nodejs"]
+
+[build.args]
+  NODE_VERSION = "18.18.0"
 
 [env]
   PORT = "8080"
