@@ -43,7 +43,7 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": "19.x",
+    "node": "18.x",
     "npm": "10.x"
   }
 }
