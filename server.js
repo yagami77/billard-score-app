@@ -128,7 +128,7 @@ httpServer.on('error', (error) => {
 });
 
 // Configuration du port
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
     console.log(`WebSocket server running on port ${PORT}`);
     console.log('Allowed origins:', allowedOrigins);
