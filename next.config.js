@@ -16,21 +16,7 @@ const nextConfig = {
             'www.5quilles.com'
         ]
     },
-    async redirects() {
-        return [
-            {
-                source: '/(.*)',
-                has: [
-                    {
-                        type: 'host',
-                        value: '^5quilles\\.com$',  // Correction ici : regex précise
-                    }
-                ],
-                permanent: true,
-                destination: 'https://www.5quilles.com/:1'
-            }
-        ];
-    }
+    // Suppression totale du bloc redirects() ici
 };
 
 module.exports = nextConfig;
