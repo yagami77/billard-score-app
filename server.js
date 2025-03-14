@@ -1,25 +1,8 @@
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
-// Création du serveur HTTP avec redirection vers HTTPS et www.5quilles.com
-const httpServer = createServer((req, res) => {
-    const host = req.headers.host || '';
-    const targetHost = 'www.5quilles.com';
-    const isHttps = req.headers['x-forwarded-proto'] === 'https';
-
-    // Rediriger si l'hôte n'est pas "www.5quilles.com" ou si la connexion n'est pas HTTPS
-    if (host !== targetHost || !isHttps) {
-        const newLocation = `https://${targetHost}${req.url}`;
-        console.log(`Redirection: ${req.url} -> ${newLocation}`);
-        res.writeHead(301, { Location: newLocation });
-        res.end();
-        return;
-    }
-
-    // Réponse par défaut (si aucune redirection n'est nécessaire)
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('WebSocket Server is Running');
-});
+// Création du serveur HTTP
+const httpServer = createServer();
 
 // Configuration des origines autorisées
 const allowedOrigins = [
@@ -44,14 +27,14 @@ const tableStates = new Map();
 const dashboardSockets = new Set();
 
 io.on('connection', (socket) => {
-    console.log('New client connected from:', socket.handshake.headers.origin);
+    console.log('✅ New WebSocket client connected from:', socket.handshake.headers.origin);
 
     let currentRoom = null;
     let isDashboard = false;
 
     // Gestion des connexions dashboard
     socket.on('joinDashboard', () => {
-        console.log('Client joining dashboard');
+        console.log('📊 Client joined dashboard');
         isDashboard = true;
         dashboardSockets.add(socket);
 
@@ -66,7 +49,7 @@ io.on('connection', (socket) => {
 
     // Gestion des connexions à une table spécifique
     socket.on('joinRoom', (roomCode) => {
-        console.log(`Client joining room: ${roomCode}`);
+        console.log(`🎱 Client joined room: ${roomCode}`);
 
         if (currentRoom) {
             socket.leave(currentRoom);
@@ -82,7 +65,7 @@ io.on('connection', (socket) => {
 
     // Mise à jour de l'état d'une table
     socket.on('updateState', (roomCode, newState) => {
-        console.log(`State update for room ${roomCode}:`, newState);
+        console.log(`🔄 State update for room ${roomCode}:`, newState);
         tableStates.set(roomCode, newState);
 
         // Diffuser aux clients de la table
@@ -101,7 +84,7 @@ io.on('connection', (socket) => {
 
     // Gestion des déconnexions
     socket.on('disconnect', () => {
-        console.log('Client disconnected');
+        console.log('❌ Client disconnected');
         if (isDashboard) {
             dashboardSockets.delete(socket);
         } else if (currentRoom) {
@@ -118,18 +101,18 @@ io.on('connection', (socket) => {
 
     // Gestion des erreurs
     socket.on('error', (error) => {
-        console.error('Socket error:', error);
+        console.error('⚠️ Socket error:', error);
     });
 });
 
 // Gestion des erreurs serveur
 httpServer.on('error', (error) => {
-    console.error('Server error:', error);
+    console.error('🚨 Server error:', error);
 });
 
 // Configuration du port
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
-    console.log(`WebSocket server running on port ${PORT}`);
-    console.log('Allowed origins:', allowedOrigins);
+    console.log(`🚀 WebSocket server running on port ${PORT}`);
+    console.log('🌍 Allowed origins:', allowedOrigins);
 });
