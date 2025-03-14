@@ -1,19 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     typescript: {
-        ignoreBuildErrors: true,  // Ignore les erreurs TypeScript
+        ignoreBuildErrors: true,
     },
     eslint: {
-        ignoreDuringBuilds: true,  // Ignore les erreurs ESLint
+        ignoreDuringBuilds: true,
     },
-    trailingSlash: true, // Ajoute un slash à la fin des URLs pour éviter les erreurs de routage
-    output: 'standalone', // Permet de déployer sans dépendances inutiles
-    reactStrictMode: false, // Désactive les warnings de Next.js
+    trailingSlash: true,
+    output: 'standalone',
+    reactStrictMode: false,
     images: {
         domains: [
-            'localhost',          // Localhost pour le développement
-            '5quilles.com',       // Domaine sans www
-            'www.5quilles.com'    // Domaine avec www
+            'localhost',
+            '5quilles.com',
+            'www.5quilles.com'
         ]
     },
     async redirects() {
@@ -23,7 +23,7 @@ const nextConfig = {
                 has: [
                     {
                         type: 'host',
-                        value: '5quilles.com'
+                        value: '^5quilles\\.com$',  // Correction ici : regex précise
                     }
                 ],
                 permanent: true,
