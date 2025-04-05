@@ -24,9 +24,19 @@ export function useSyncedState(roomCode: string, initialState: GameState) {
 
     useEffect(() => {
         if (pendingUpdate) {
-            console.log('📤 Émission de la mise à jour vers le serveur:', state);
-            emitStateUpdate(state);
-            setPendingUpdate(false);
+            const sendUpdate = () => {
+                try {
+                    console.log('📤 Émission de la mise à jour vers le serveur:', state);
+                    emitStateUpdate(state);
+                    setPendingUpdate(false);
+                } catch (error) {
+                    console.error('❌ Erreur lors de l\'émission de la mise à jour:', error);
+                    // Réessayer après un délai si l'émission échoue
+                    setTimeout(sendUpdate, 1000);
+                }
+            };
+
+            sendUpdate();
         }
     }, [pendingUpdate, state, emitStateUpdate]);
 

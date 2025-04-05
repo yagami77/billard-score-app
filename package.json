@@ -11,7 +11,9 @@
     "lint:fix": "next lint --fix",
     "socket": "node server.js",
     "dev:all": "concurrently \"npm run dev\" \"npm run socket\"",
-    "start:prod": "concurrently \"next start -p 3000\" \"node server.js\""
+    "start:prod": "concurrently \"next start -p 3000\" \"node server.js\"",
+    "next-start": "next start",
+    "socket-start": "node server.js"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.2",

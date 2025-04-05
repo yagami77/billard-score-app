@@ -1,45 +1,76 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
-import { GameState } from '@/types/types';
-
-interface ActiveGame {
-    roomCode: string;
-    gameState: GameState;
-    lastUpdate: Date;
-}
 
 export const useDashboard = () => {
-    const [games, setGames] = useState<ActiveGame[]>([]);
+    const [games, setGames] = useState([]);
+    const socketRef = useRef(null);
+
+    // Vérifier si on est côté client
+    const isClient = typeof window !== 'undefined';
 
     useEffect(() => {
-        const socket = io('http://localhost:3001');
+        // Ne s'exécute que côté client
+        if (!isClient) return;
 
-        socket.emit('joinDashboard');
+        const socketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'http://localhost:3001';
 
-        socket.on('dashboardUpdate', (currentGames: ActiveGame[]) => {
-            setGames(currentGames);
+        // Créer une nouvelle connexion
+        const socket = io(socketUrl, {
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            timeout: 10000
         });
 
-        socket.on('gameUpdate', (update: ActiveGame) => {
-            setGames(prev => {
-                const index = prev.findIndex(game => game.roomCode === update.roomCode);
-                if (index === -1) {
+        socketRef.current = socket;
+
+        // Gestion des événements
+        socket.on('connect', () => {
+            console.log('Dashboard connected to WebSocket');
+            socket.emit('joinDashboard');
+        });
+
+        socket.on('dashboardUpdate', (data) => {
+            console.log('Dashboard received update:', data);
+            if (Array.isArray(data)) {
+                setGames(data);
+            }
+        });
+
+        // Gestion des mises à jour individuelles
+        socket.on('gameUpdate', (update) => {
+            console.log('Game update received:', update);
+            if (update && update.roomCode) {
+                setGames(prev => {
+                    const index = prev.findIndex(game => game.roomCode === update.roomCode);
+                    if (index >= 0) {
+                        const newGames = [...prev];
+                        newGames[index] = update;
+                        return newGames;
+                    }
                     return [...prev, update];
-                }
-                const newGames = [...prev];
-                newGames[index] = update;
-                return newGames;
-            });
+                });
+            }
         });
 
-        socket.on('gameEnded', (roomCode: string) => {
+        // Gestion des suppressions de tables
+        socket.on('tableDeleted', ({ roomCode }) => {
+            console.log('Table deleted:', roomCode);
             setGames(prev => prev.filter(game => game.roomCode !== roomCode));
         });
 
+        socket.on('connect_error', (error) => {
+            console.error('Dashboard connection error:', error);
+        });
+
+        // Nettoyage
         return () => {
-            socket.disconnect();
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
         };
-    }, []);
+    }, [isClient]); // Ajout de isClient comme dépendance
 
     return games;
 };

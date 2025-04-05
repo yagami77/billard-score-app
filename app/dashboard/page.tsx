@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Trophy } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -39,67 +39,85 @@ export default function Dashboard() {
 
             {/* Grille des matches */}
             <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredGames.map((game) => (
-                    <div key={game.roomCode}
-                         className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-                        {/* En-tête de la carte */}
-                        <div className="bg-blue-600 text-white px-4 py-2 rounded-t-lg">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm font-medium">Table: {game.roomCode}</span>
-                                <span className="text-sm">
-                                   {formatDistanceToNow(new Date(game.lastUpdate), {
-                                       addSuffix: true,
-                                       locale: fr
-                                   })}
-                               </span>
+                {filteredGames.map((game) => {
+                    // Déterminer s'il y a un gagnant
+                    const hasWinner = game.gameState.gagnant !== null;
+                    const winnerPlayer = game.gameState.gagnant;
+
+                    return (
+                        <div key={game.roomCode}
+                             className={`bg-white rounded-lg ${hasWinner ? 'ring-2 ring-yellow-400' : 'shadow-sm'} hover:shadow-md transition-shadow duration-200`}>
+                            {/* En-tête de la carte */}
+                            <div className={`${hasWinner ? 'bg-gradient-to-r from-blue-600 to-indigo-700' : 'bg-blue-600'} text-white px-4 py-2 rounded-t-lg`}>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-medium">Table: {game.roomCode}</span>
+                                    {hasWinner ? (
+                                        <span className="bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full text-xs font-bold">
+                                            Terminé
+                                        </span>
+                                    ) : (
+                                        <span className="text-sm">
+                                            {formatDistanceToNow(new Date(game.lastUpdate), {
+                                                addSuffix: true,
+                                                locale: fr
+                                            })}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="p-4">
+                                {/* Score et informations */}
+                                <div className="flex justify-between items-center mb-4">
+                                    {/* Joueur 1 */}
+                                    <div className="text-center flex-1">
+                                        <div className={`font-semibold text-lg truncate px-2 flex items-center justify-center ${winnerPlayer === 'joueur1' ? 'text-blue-700' : ''}`}>
+                                            {winnerPlayer === 'joueur1' && (
+                                                <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
+                                            )}
+                                            {game.gameState.nomJoueurs.joueur1}
+                                        </div>
+                                        <div className={`text-3xl font-bold ${winnerPlayer === 'joueur1' ? 'text-blue-600' : game.gameState.activePlayer === 'joueur1' ? 'text-blue-500' : 'text-gray-700'}`}>
+                                            {game.gameState.scores.joueur1}
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                            Sets: {game.gameState.setsGagnes.joueur1}
+                                        </div>
+                                    </div>
+
+                                    {/* Séparateur */}
+                                    <div className="flex flex-col items-center px-2">
+                                        <span className="text-gray-400 font-bold text-lg">VS</span>
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            {game.gameState.configPartie.scoreParSet} pts
+                                        </div>
+                                    </div>
+
+                                    {/* Joueur 2 */}
+                                    <div className="text-center flex-1">
+                                        <div className={`font-semibold text-lg truncate px-2 flex items-center justify-center ${winnerPlayer === 'joueur2' ? 'text-blue-700' : ''}`}>
+                                            {game.gameState.nomJoueurs.joueur2}
+                                            {winnerPlayer === 'joueur2' && (
+                                                <Trophy className="h-4 w-4 text-yellow-500 ml-1" />
+                                            )}
+                                        </div>
+                                        <div className={`text-3xl font-bold ${winnerPlayer === 'joueur2' ? 'text-blue-600' : game.gameState.activePlayer === 'joueur2' ? 'text-blue-500' : 'text-gray-700'}`}>
+                                            {game.gameState.scores.joueur2}
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                            Sets: {game.gameState.setsGagnes.joueur2}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Pied de la carte */}
+                                <div className="text-sm text-gray-500 text-center border-t pt-2">
+                                    Match en {game.gameState.configPartie.nbSetsGagnants} set{game.gameState.configPartie.nbSetsGagnants > 1 ? 's' : ''} gagnant{game.gameState.configPartie.nbSetsGagnants > 1 ? 's' : ''}
+                                </div>
                             </div>
                         </div>
-
-                        <div className="p-4">
-                            {/* Score et informations */}
-                            <div className="flex justify-between items-center mb-4">
-                                {/* Joueur 1 */}
-                                <div className="text-center flex-1">
-                                    <div className="font-semibold text-lg truncate px-2">
-                                        {game.gameState.nomJoueurs.joueur1}
-                                    </div>
-                                    <div className={`text-3xl font-bold ${game.gameState.activePlayer === 'joueur1' ? 'text-blue-600' : 'text-gray-700'}`}>
-                                        {game.gameState.scores.joueur1}
-                                    </div>
-                                    <div className="text-sm text-gray-600">
-                                        Sets: {game.gameState.setsGagnes.joueur1}
-                                    </div>
-                                </div>
-
-                                {/* Séparateur */}
-                                <div className="flex flex-col items-center px-2">
-                                    <span className="text-gray-400 font-bold text-lg">VS</span>
-                                    <div className="text-xs text-gray-500 mt-1">
-                                        {game.gameState.configPartie.scoreParSet} pts
-                                    </div>
-                                </div>
-
-                                {/* Joueur 2 */}
-                                <div className="text-center flex-1">
-                                    <div className="font-semibold text-lg truncate px-2">
-                                        {game.gameState.nomJoueurs.joueur2}
-                                    </div>
-                                    <div className={`text-3xl font-bold ${game.gameState.activePlayer === 'joueur2' ? 'text-blue-600' : 'text-gray-700'}`}>
-                                        {game.gameState.scores.joueur2}
-                                    </div>
-                                    <div className="text-sm text-gray-600">
-                                        Sets: {game.gameState.setsGagnes.joueur2}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Pied de la carte */}
-                            <div className="text-sm text-gray-500 text-center border-t pt-2">
-                                Match en {game.gameState.configPartie.nbSetsGagnants} set{game.gameState.configPartie.nbSetsGagnants > 1 ? 's' : ''} gagnant{game.gameState.configPartie.nbSetsGagnants > 1 ? 's' : ''}
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* État vide */}

@@ -144,3 +144,34 @@
 .animate-fade-up {
   animation: fadeUp 1s ease-out forwards;
 }
+
+@keyframes scoreUpdated {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.5); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes scoreFlash {
+  0% { background-color: #e53e3e; } /* Rouge foncé */
+  50% { background-color: #f56565; } /* Rouge vif */
+  100% { background-color: #e53e3e; } /* Retour au rouge foncé */
+}
+
+.score-changed {
+  animation: scoreUpdated 1.5s ease-out, scoreFlash 0.8s ease-in-out;
+}
+
+@keyframes setWon {
+  0% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+  25% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.8); }
+  50% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.4); }
+  75% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.8); }
+  100% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+}
+
+.set-won {
+  position: relative;
+  z-index: 10;
+  animation: setWon 3s ease-in-out;
+}
