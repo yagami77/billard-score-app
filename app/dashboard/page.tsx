@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Trophy } from 'lucide-react';
+import { Search, Trophy, ArrowLeft } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
+    const router = useRouter();
     const games = useDashboard();
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -17,6 +20,17 @@ export default function Dashboard() {
 
     return (
         <div className="min-h-screen bg-gray-50 p-4">
+            {/* Bouton Retour */}
+            <div className="max-w-7xl mx-auto mb-4">
+                <Button
+                    variant="outline"
+                    className="mb-4"
+                    onClick={() => router.push('/')}
+                >
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Retour à l'accueil
+                </Button>
+            </div>
+            
             {/* En-tête et Recherche */}
             <div className="max-w-7xl mx-auto mb-8">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center">
