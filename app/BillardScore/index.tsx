@@ -101,16 +101,34 @@ const BillardScore = ({ initialTableId }) => {
         const setsParam = searchParams.get('sets');
         const pointsParam = searchParams.get('points');
 
-        // Si des paramètres sont présents, les utiliser pour la configuration
-        if (setsParam && pointsParam && showConfigDialog) {
-            setTempConfig(prev => ({
-                ...prev,
-                nbSetsGagnants: setsParam,
-                scoreParSet: pointsParam
-            }));
-        }
-
-        if (initialTableId) {
+        // Si des paramètres sont présents
+        if (setsParam && pointsParam) {
+            const nbSets = parseInt(setsParam);
+            const scoreSet = parseInt(pointsParam);
+            
+            // Vérifier que les valeurs sont valides
+            if (!isNaN(nbSets) && !isNaN(scoreSet) && nbSets > 0 && scoreSet > 0) {
+                if (initialTableId) {
+                    const tableNum = parseInt(initialTableId);
+                    if (!isNaN(tableNum)) {
+                        // Configurer directement la partie sans afficher la boîte de dialogue
+                        setConfigPartie({
+                            nbSetsGagnants: nbSets,
+                            scoreParSet: scoreSet,
+                            numeroBillard: tableNum
+                        });
+                        setShowConfigDialog(false); // Sauter l'écran de configuration
+                    }
+                }
+            } else {
+                // Si les paramètres sont présents mais invalides, pré-remplir le formulaire
+                setTempConfig(prev => ({
+                    ...prev,
+                    nbSetsGagnants: setsParam,
+                    scoreParSet: pointsParam
+                }));
+            }
+        } else if (initialTableId) {
             const tableNum = parseInt(initialTableId);
             if (!isNaN(tableNum)) {
                 // Vérifier s'il existe une configuration sauvegardée
